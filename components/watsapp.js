@@ -8,7 +8,7 @@ import {
     heightPercentageToDP,
   } from 'react-native-responsive-screen';
  
-export default function watsapp() {
+export default function Watsapp() {
  
   const [cellNumber, setCellNumber] = useState('');
  

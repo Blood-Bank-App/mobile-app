@@ -1,6 +1,4 @@
-import React, {useState} from 'react';
-
-// import all the components we are going to use
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -8,15 +6,16 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  StatusBar
+  StatusBar,
+  Alert
 } from 'react-native';
 import {
-    widthPercentageToDP,
-    heightPercentageToDP,
-  } from 'react-native-responsive-screen';
+  widthPercentageToDP,
+  heightPercentageToDP,
+} from 'react-native-responsive-screen';
 
-// import SMS API
-import SendSMS from 'react-native-sms';
+// Import Expo SMS
+import * as SMS from 'expo-sms';
 
 const Smssend = () => {
   const [mobileNumber, setMobileNumber] = useState('+92');
@@ -24,38 +23,41 @@ const Smssend = () => {
     'Please Enter Blood Request',
   );
 
-  const initiateSMS = () => {
-    // Check for perfect 10 digit length
+  const initiateSMS = async () => {
+    // Check for perfect 11 digit length
     if (mobileNumber.length != 11) {
-      alert('Please insert correct contact number');
+      Alert.alert('Error', 'Please insert correct contact number');
       return;
     }
 
-    SendSMS.send(
-      {
-        // Message body
-        body: bodySMS,
-        // Recipients Number
-        recipients: [mobileNumber],
-        // An array of types 
-        // "completed" response when using android
-        successTypes: ['sent', 'queued'],
-      },
-      (completed, cancelled, error) => {
-        if (completed) {
-          console.log('SMS Sent Completed');
-        } else if (cancelled) {
-          console.log('SMS Sent Cancelled');
-        } else if (error) {
-          console.log('Some error occured');
-        }
-      },
-    );
+    // Check if SMS is available
+    const isAvailable = await SMS.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert('Error', 'SMS is not available on this device');
+      return;
+    }
+
+    try {
+      // Send SMS
+      const { result } = await SMS.sendSMSAsync(
+        [mobileNumber],
+        bodySMS
+      );
+
+      if (result === 'sent') {
+        Alert.alert('Success', 'SMS Sent Successfully');
+      } else {
+        console.log('SMS Result:', result);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to send SMS');
+      console.error('SMS Error:', error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-       <StatusBar barStyle="light-content" backgroundColor='#b22222' />
+      <StatusBar barStyle="light-content" backgroundColor='#b22222' />
       <View style={styles.container}>
         <Text style={styles.titleText}>
           Send Blood Request to User
@@ -65,9 +67,7 @@ const Smssend = () => {
         </Text>
         <TextInput
           value={mobileNumber}
-          onChangeText={
-            (mobileNumber) => setMobileNumber(mobileNumber)
-          }
+          onChangeText={(mobileNumber) => setMobileNumber(mobileNumber)}
           placeholder={'Enter Contact Number to Call'}
           keyboardType="numeric"
           style={styles.textInput}
@@ -80,13 +80,15 @@ const Smssend = () => {
           onChangeText={(bodySMS) => setBodySMS(bodySMS)}
           placeholder={'Enter SMS body'}
           style={styles.textInput}
+          multiline={true}
+          numberOfLines={4}
         />
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.button}
           onPress={initiateSMS}>
           <Text style={styles.buttonTextStyle}>
-            Send Sms
+            Send SMS
           </Text>
         </TouchableOpacity>
       </View>
@@ -131,14 +133,14 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#b22222',
-    borderRadius:20,
+    borderRadius: 20,
     width: widthPercentageToDP(60),
     height: heightPercentageToDP(6),
     flexDirection: 'row',
-    alignItems:'center',
-    justifyContent:'center',
-    marginTop:25,
-    elevation:6,
-    marginLeft:52
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 25,
+    elevation: 6,
+    alignSelf: 'center'
   }
 });

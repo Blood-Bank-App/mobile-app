@@ -2,7 +2,8 @@
 
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator,StatusBar } from 'react-native';
-import firebase from '../database/firebase';
+import {auth} from '../database/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {
   widthPercentageToDP,
@@ -31,35 +32,35 @@ export default class Login extends Component {
 
   
   userLogin = () => {
-    if(this.state.email === '' && this.state.password === '') {
-      Alert.alert('Enter details to signin!')
+    if (this.state.email === '' && this.state.password === '') {
+      Alert.alert('Enter details to sign in!');
     } else {
-      this.setState({
-        isLoading: true,
-      })
-      firebase
-      .auth()
-      .signInWithEmailAndPassword(this.state.email, this.state.password)
-      .then((res) => {
-        console.log(res)
-        console.log('User logged-in successfully!')
-        this.setState({
-          isLoading: false,
-          email: '', 
-          password: ''
-        })
-        this.props.navigation.navigate('Dashboard')
-      })
-      .catch(error =>this.setState({
-        isLoading: false,
-        errorMessage: error.message
-     },() => {
-        alert(this.state.errorMessage);
-       
-     }) )
-    }
+      this.setState({ isLoading: true });
   
-  }
+      signInWithEmailAndPassword(auth, this.state.email, this.state.password)
+        .then((res) => {
+          console.log(res);
+          console.log('User logged-in successfully!');
+          this.setState({
+            isLoading: false,
+            email: '',
+            password: '',
+          });
+          this.props.navigation.navigate('Dashboard');
+        })
+        .catch((error) => {
+          this.setState(
+            {
+              isLoading: false,
+              errorMessage: error.message,
+            },
+            () => {
+              alert(this.state.errorMessage);
+            }
+          );
+        });
+    }
+  };
 
   render() {
     if(this.state.isLoading){

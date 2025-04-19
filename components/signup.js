@@ -2,7 +2,9 @@
 
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert, StatusBar ,TextInput} from 'react-native';
-import firebase from '../database/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { ref, set } from "firebase/database";
+import { auth, database } from '../database/firebase';
 import {
   widthPercentageToDP,
   heightPercentageToDP,
@@ -54,39 +56,27 @@ export default class Signup extends Component {
     {
     if(this.state.city != "Select a City" && this.state.city != 0 && this.state.city != null)                      
      {
-      await firebase
-      .auth()
-      .createUserWithEmailAndPassword(this.state.email, this.state.password)
-      .then((res) => {
-              
-              firebase.database().ref('users/'+ res.user.uid).set(
-                {
-                  Email:this.state.email,
-                  DisplayName: this.state.displayName,
-                  Password: this.state.cnic,
-                  City: this.state.city,
-                  Blood:this.state.blood,
-                  Phone:this.state.phone,
-                  Age:this.state.age,
-                  Gender:this.state.gender
+      const res = await createUserWithEmailAndPassword(auth, this.state.email, this.state.password);
 
-              })
-                    .then(() => {
-                      Alert.alert('User registered successfully!')
-                        this.props.navigation.navigate('Login')
-                       
-                    })
-                    .catch((error) => {
-                        alert(error.message)
-                    })
-        res.updateProfile({
-          displayName: this.state.displayName
-        })
-        
-      })
-      .catch(error =>this.setState({
-        errorMessage: error.message
-     }) )
+    // Store additional user info in the Realtime Database
+    await set(ref(database, "users/" + res.user.uid), {
+      Email: this.state.email,
+      DisplayName: this.state.displayName,
+      Password: this.state.cnic,
+      City: this.state.city,
+      Blood: this.state.blood,
+      Phone: this.state.phone,
+      Age: this.state.age,
+      Gender: this.state.gender,
+    });
+
+    // Set the user's display name in their Auth profile
+    await updateProfile(res.user, {
+      displayName: displayName,
+    });
+
+    Alert.alert("User registered successfully!");
+    this.props.navigation.navigate("Login");
       
     } 
     else
