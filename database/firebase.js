@@ -1,16 +1,28 @@
 import { initializeApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 var firebaseConfig = {
-  apiKey: "AIzaSyC5i50YtpTLeTrNUtWvq-LmA6Xl3kDUua8",
-  authDomain: "bloodapp-e82c0.firebaseapp.com",
-  projectId: "bloodapp-e82c0",
-  storageBucket: "bloodapp-e82c0.appspot.com",
-  messagingSenderId: "389683037891",
-  appId: "1:389683037891:web:bf95c25274beb318310476",
-  measurementId: "G-QET0XWZKWP"
+  apiKey: "AIzaSyDBKr5eE4TV-uget7xQsUko5UxzXJ1M66Y",
+  authDomain: "bloodbank-50357.firebaseapp.com",
+  projectId: "bloodbank-50357",
+  storageBucket: "bloodbank-50357.firebasestorage.app",
+  messagingSenderId: "573555262048",
+  appId: "1:573555262048:web:a8c4b8231c3c52c17e7905",
+  measurementId: "G-4NYETVY0NJ"
 };
 
 
-const firebase = initializeApp(firebaseConfig);
+// 🔥 Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-export default firebase;
+// ✅ Fix: initialize auth with persistence for React Native
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
+
+// 🔄 Realtime DB
+const database = getDatabase(app);
+
+export { app, auth, database };

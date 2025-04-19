@@ -10,9 +10,10 @@ import Dashboard from './components/dashboard';
 import SplashScreen from './components/SplashScreen';
 import Forgetpass from './components/Forgetpass';
 import Feedback from './components/Feedback';
+import Smssend from './components/Smssend';
 import Findblooddonor from './components/Findblooddonor';
 import Setting from './components/Setting';
-import watsapp from './components/watsapp';
+import Watsapp from './components/watsapp';
 
 
 const Stack = createStackNavigator();
@@ -46,26 +47,29 @@ function MyStack() {
       <Stack.Screen 
         name="Signup" 
         component={Signup} 
-        options={
-          {title: 'Signup'},
-          {headerLeft: null} ,{headerShown: false}
-        }
+        options={{
+          title: 'Signup',
+          headerLeft: () => null,
+          headerShown: false
+        }}
       />       
       <Stack.Screen 
         name="Login" 
         component={Login} 
-        options={
-          {title: 'Login'},
-          {headerLeft: null} ,{headerShown: false}
-        }
+        options={{
+          title: 'Login',
+          headerLeft: () => null,
+          headerShown: false
+        }}
       />
        <Stack.Screen 
         name="Setting" 
         component={Setting} 
-        options={
-          {title: 'Setting'},
-          {headerLeft: null} ,{headerShown: true}
-        }
+        options={{
+          title: 'Setting',
+          headerLeft: () => null,
+          headerShown: true
+        }}
       />
 
       <Stack.Screen 
@@ -76,8 +80,14 @@ function MyStack() {
       />
 
       <Stack.Screen 
+        name="Smssend" 
+        component={Smssend} 
+        options={{ title: 'Sms Send'  }}
+      />
+
+      <Stack.Screen 
         name="watsapp" 
-        component={watsapp} 
+        component={Watsapp} 
         options={{ title: 'Whatsapp'  }}
       /> 
 
@@ -103,11 +113,11 @@ function MyStack() {
       <Stack.Screen 
        name="Dashboard" 
        component={Dashboard} 
-       options={
-         { title: 'Dashboard' },
-
-          {headerLeft: null}
-       }
+       options={{
+         title: 'Dashboard',
+         headerLeft: () => null,
+         headerShown: true
+       }}
       />
     </Stack.Navigator>
        
@@ -117,9 +127,14 @@ function MyStack() {
 }
 
 export default function App() {
+  try {
   return (
     <NavigationContainer>
       <MyStack />
     </NavigationContainer>
   );
+} catch (e) {
+  console.error('App crashed:', e);
+  return null;
+}
 }

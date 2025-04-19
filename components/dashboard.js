@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity,Image,StatusBar,Share} from 'react-native';
-import firebase from '../database/firebase';
+import { auth } from '../database/firebase';
 import {
   widthPercentageToDP,
   heightPercentageToDP,
@@ -23,8 +23,8 @@ export default class Dashboard extends Component {
   
   render() {
     this.state = { 
-      uid: firebase.auth().currentUser.uid,
-      email: firebase.auth().currentUser.email
+      uid: auth.currentUser?.uid || '',
+      email: auth.currentUser?.email || ''
     }   
     const onShare = async () => {
       try {
