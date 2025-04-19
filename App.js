@@ -1,22 +1,21 @@
-
+import 'react-native-gesture-handler';
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import Login from './components/login';
-import Userprofile from './components/Userprofile';
-import Signup from './components/signup';
+// Component imports
 import Dashboard from './components/dashboard';
-import SplashScreen from './components/SplashScreen';
-import Forgetpass from './components/Forgetpass';
 import Feedback from './components/Feedback';
 import Findblooddonor from './components/Findblooddonor';
+import Forgetpass from './components/Forgetpass';
+import Login from './components/login';
 import Setting from './components/Setting';
-import watsapp from './components/watsapp';
-
+import Signup from './components/signup';
+import SplashScreen from './components/SplashScreen';
+import Userprofile from './components/Userprofile';
+import Whatsapp from './components/watsapp'; // Capitalize if it's a component
 
 const Stack = createStackNavigator();
-
 
 function MyStack() {
   return (
@@ -26,93 +25,77 @@ function MyStack() {
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: '#b22222',
-          height:70
+          height: 70,
         },
-        
         headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-      }}>
-        <Stack.Screen 
-        name="SplashScreen" 
-        component={SplashScreen} 
-        options={{headerShown: false}}  
-      
-      
-      />       
-      
-
-      <Stack.Screen 
-        name="Signup" 
-        component={Signup} 
-        options={
-          {title: 'Signup'},
-          {headerLeft: null} ,{headerShown: false}
-        }
-      />       
-      <Stack.Screen 
-        name="Login" 
-        component={Login} 
-        options={
-          {title: 'Login'},
-          {headerLeft: null} ,{headerShown: false}
-        }
-      />
-       <Stack.Screen 
-        name="Setting" 
-        component={Setting} 
-        options={
-          {title: 'Setting'},
-          {headerLeft: null} ,{headerShown: true}
-        }
+      }}
+    >
+      <Stack.Screen
+        name="SplashScreen"
+        component={SplashScreen}
+        options={{ headerShown: false }}
       />
 
-      <Stack.Screen 
-        name="Findblooddonor" 
-        component={Findblooddonor} 
-          options={{ title: 'Find Blood Donor' }}
-        
+      <Stack.Screen
+        name="Signup"
+        component={Signup}
+        options={{ headerShown: false }}
       />
 
-      <Stack.Screen 
-        name="watsapp" 
-        component={watsapp} 
-        options={{ title: 'Whatsapp'  }}
-      /> 
-
-     <Stack.Screen 
-        name="Feedback" 
-        component={Feedback} 
-        options={{ title: 'Feed Back' }}
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{ headerShown: false }}
       />
 
-       <Stack.Screen 
-        name="Userprofile" 
-        component={Userprofile} 
-        options={{ title: 'User Profile'  }}
+      <Stack.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{
+          title: 'Dashboard',
+          headerShown: true,
+        }}
       />
-       <Stack.Screen 
-        name="Forgetpass" 
-        component={Forgetpass} 
-        options={{ title: 'Change Pass'  }} 
-      
-      
-      />       
 
-      <Stack.Screen 
-       name="Dashboard" 
-       component={Dashboard} 
-       options={
-         { title: 'Dashboard' },
+      <Stack.Screen
+        name="Setting"
+        component={Setting}
+        options={{ title: 'Settings' }}
+      />
 
-          {headerLeft: null}
-       }
+      <Stack.Screen
+        name="Findblooddonor"
+        component={Findblooddonor}
+        options={{ title: 'Find Blood Donor' }}
+      />
+
+      <Stack.Screen
+        name="Whatsapp"
+        component={Whatsapp}
+        options={{ title: 'WhatsApp' }}
+      />
+
+      <Stack.Screen
+        name="Feedback"
+        component={Feedback}
+        options={{ title: 'Feedback' }}
+      />
+
+      <Stack.Screen
+        name="Userprofile"
+        component={Userprofile}
+        options={{ title: 'User Profile' }}
+      />
+
+      <Stack.Screen
+        name="Forgetpass"
+        component={Forgetpass}
+        options={{ title: 'Change Password' }}
       />
     </Stack.Navigator>
-       
-
-
   );
 }
 

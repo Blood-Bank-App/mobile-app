@@ -10,7 +10,11 @@ var firebaseConfig = {
   measurementId: "G-QET0XWZKWP"
 };
 
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-const firebase = initializeApp(firebaseConfig);
+// Initialize services
+const auth = getAuth(app);
+const database = getDatabase(app);
 
-export default firebase;
+export { app, auth, database };
