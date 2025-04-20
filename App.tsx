@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
+import { PaperProvider, DefaultTheme } from 'react-native-paper';
 import Login from './components/Login';
 import UserProfile from './components/UserProfile';
-import SignUp from './components/SignUp';
+import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
 import SplashScreen from './components/SplashScreen';
-import ForgetPass from './components/ForgetPass';
+import ForgotPassword from './components/ForgotPassword';
 import Feedback from './components/Feedback';
 import SmsSend from './components/SmsSend';
 import FindBloodDonor from './components/FindBloodDonor';
@@ -17,15 +17,32 @@ import { RootStackParamList } from 'types';
 
 
 const Stack = createStackNavigator<RootStackParamList>();
+// 🔴 Custom Red Theme
+const redTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#b22222', 
+    accent: '#ff4d4d',  
+    background: '#fff', 
+    text: '#000',       
+    placeholder: '#888',
+    surface: '#fff',    
+    onSurface: '#000',  
+    disabled: '#ccc',
+    error: '#f44336',
+  },
+};
 
-function MyStack(): JSX.Element {
+
+function AppStack(): JSX.Element {
   return (
     <Stack.Navigator
       initialRouteName="SplashScreen"
       screenOptions={{
         headerTitleAlign: 'center',
         headerStyle: {
-          backgroundColor: '#b22222',
+          backgroundColor: redTheme.colors.primary,
           height: 70
         },
         headerTintColor: '#fff',
@@ -40,10 +57,10 @@ function MyStack(): JSX.Element {
       />       
       
       <Stack.Screen 
-        name="SignUp" 
-        component={SignUp} 
+        name="Signup" 
+        component={Signup} 
         options={{
-          title: 'SignUp',
+          title: 'Signup',
           headerLeft: () => null,
           headerShown: false
         }}
@@ -97,9 +114,9 @@ function MyStack(): JSX.Element {
         options={{ title: 'User Profile' }}
       />
       <Stack.Screen 
-        name="ForgetPass" 
-        component={ForgetPass} 
-        options={{ title: 'Change Pass' }}
+        name="ForgotPassword" 
+        component={ForgotPassword} 
+        options={{ title: 'Change Password' }}
       />       
 
       <Stack.Screen 
@@ -118,7 +135,9 @@ function MyStack(): JSX.Element {
 export default function App(): JSX.Element {
   return (
     <NavigationContainer>
-      <MyStack />
+      <PaperProvider theme={redTheme}>
+        <AppStack />
+      </PaperProvider>
     </NavigationContainer>
   );
 }
