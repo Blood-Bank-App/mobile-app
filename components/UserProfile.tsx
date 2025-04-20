@@ -1,22 +1,9 @@
-// components/dashboard.js
-
-import React, { Component, useState } from "react";
-import {
-  StyleSheet,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  TouchableHighlight,
-  Image,
-  StatusBar,
-} from "react-native";
+import React, {Component} from 'react';
+import { View, StyleSheet, StatusBar, ScrollView } from 'react-native';
+import { Avatar, TextInput, useTheme, Card, Title } from 'react-native-paper';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { onValue, ref } from "firebase/database";
 import { auth, database } from "../database/firebase";
-import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from "react-native-responsive-screen";
 
 interface State {
   displayname: string;
@@ -64,136 +51,58 @@ export default class Userprofile extends Component<{}, State> {
   render() {
     const { displayname, city, age, blood, phone, gender } = this.state;
     return (
-      <View>
+      <ScrollView contentContainerStyle={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#b22222" />
 
-        <TouchableHighlight style={styles.profileImgContainer}>
-          <Image
-            source={require("../assets/man.jpeg")}
-            style={styles.profileImg}
-          />
-        </TouchableHighlight>
+        <Avatar.Image
+          size={100}
+          source={require('../assets/man.jpeg')}
+          style={styles.avatar}
+        />
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={displayname}
-            editable={false}
-          />
-        </View>
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.title}>User Information</Title>
 
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} value={city} editable={false} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} value={blood} editable={false} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} value={gender} editable={false} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} value={phone} editable={false} />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <TextInput style={styles.input} value={age} editable={false} />
-        </View>
-      </View>
+            <TextInput label="Full Name" value={displayname} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="City" value={city} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="Blood Group" value={blood} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="Gender" value={gender} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="Phone" value={phone} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="Age" value={age} mode="outlined" editable={false} style={styles.input} />
+          </Card.Content>
+        </Card>
+      </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  inputContainer: {
-    borderBottomColor: "#b22222",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    width: widthPercentageToDP(80),
-    height: heightPercentageToDP(6),
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 30,
-    marginLeft: 25,
-    borderRadius: 15,
+  container: {
+    paddingVertical: 30,
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+    flexGrow: 1,
   },
-  Container: {
-    borderBottomColor: "#b22222",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    width: widthPercentageToDP(80),
-    height: heightPercentageToDP(5),
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    marginLeft: 25,
-    borderRadius: 15,
+  avatar: {
+    marginBottom: 20,
+    backgroundColor: 'white',
+    elevation: 4,
   },
-  Container1: {
-    borderBottomColor: "#b22222",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    width: widthPercentageToDP(80),
-    height: heightPercentageToDP(6),
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 25,
-    marginTop: 15,
+  card: {
+    width: wp(85),
     borderRadius: 15,
+    elevation: 5,
+    paddingBottom: 10,
   },
-  Container2: {
-    borderBottomColor: "#b22222",
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    width: widthPercentageToDP(80),
-    height: heightPercentageToDP(6),
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 25,
-    marginTop: 20,
-    borderRadius: 15,
+  title: {
+    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   input: {
-    height: heightPercentageToDP(5),
-    marginLeft: 13,
-  },
-  inputs: {
-    height: heightPercentageToDP(5),
-    marginLeft: 13,
-  },
-  button: {
-    backgroundColor: "#b22222",
-    borderRadius: 20,
-    width: widthPercentageToDP(60),
-    height: heightPercentageToDP(6),
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 40,
-    elevation: 8,
-    marginLeft: 55,
-  },
-  buttonText: {
-    fontSize: 20,
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  profileImgContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 130,
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-    elevation: 15,
-    marginTop: 25,
-  },
-  profileImg: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
+    marginBottom: 10,
+    backgroundColor: 'white',
   },
 });

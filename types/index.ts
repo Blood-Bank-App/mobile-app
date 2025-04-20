@@ -4,14 +4,14 @@ import { RouteProp } from '@react-navigation/native';
 // Define the type for the stack navigator params
 export type RootStackParamList = {
   SplashScreen: undefined;
-  SignUp: undefined;
+  Signup: undefined;
   Login: undefined;
   Setting: undefined;
   FindBloodDonor: undefined;
   SmsSend: undefined;
   Feedback: undefined;
   UserProfile: undefined;
-  ForgetPass: undefined;
+  ForgotPassword: undefined;
   Dashboard: undefined;
   Whatsapp: undefined;
 };
