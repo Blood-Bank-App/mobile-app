@@ -8,56 +8,74 @@ import {
 } from 'react-native-responsive-screen';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-export default class ForgotPasswordScreen extends React.Component {
-  constructor(props) {
+interface ForgotPasswordScreenProps {
+  navigation: any; // If using React Navigation, you can use proper typing from @react-navigation/native
+}
+
+interface ForgotPasswordScreenState {
+  email: string;
+  isLoading: boolean;
+}
+
+export default class ForgotPasswordScreen extends React.Component<
+  ForgotPasswordScreenProps,
+  ForgotPasswordScreenState
+> {
+  constructor(props: ForgotPasswordScreenProps) {
     super(props);
-    this.state = { 
-      email: "",
-      isLoading: false
+    this.state = {
+      email: '',
+      isLoading: false,
     };
   }
 
   onResetPasswordPress = async () => {
-    if (!this.state.email) {
-      Alert.alert("Error", "Please enter your email address");
+    const { email } = this.state;
+
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address');
       return;
     }
 
     try {
       this.setState({ isLoading: true });
-      await sendPasswordResetEmail(auth, this.state.email);
-      Alert.alert("Success", "Password reset email has been sent.");
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Success', 'Password reset email has been sent.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Something went wrong');
+    } finally {
       this.setState({ isLoading: false });
-    } catch (error) {
-      this.setState({ isLoading: false });
-      Alert.alert("Error", error.message);
     }
-  }
+  };
 
   render() {
+    const { email, isLoading } = this.state;
+
     return (
-      <View style={{paddingTop:50, alignItems:"center"}}>
-        <StatusBar barStyle="light-content" backgroundColor='#b22222' />
+      <View style={{ paddingTop: 50, alignItems: 'center' }}>
+        <StatusBar barStyle="light-content" backgroundColor="#b22222" />
+
         <View style={styles.inputContainer}>
-          <Icon style={{ marginLeft: 10 }} name="at" color='black' size={21}/>
-          <TextInput 
-            style={[styles.inputs]}
-            value={this.state.email}
-            onChangeText={(text) => { this.setState({email: text}) }}
+          <Icon style={{ marginLeft: 10 }} name="at" color="black" size={21} />
+          <TextInput
+            style={styles.inputs}
+            value={email}
+            onChangeText={(text) => this.setState({ email: text })}
             placeholder="Email"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
         </View>
-        <TouchableOpacity 
-          onPress={this.onResetPasswordPress} 
+
+        <TouchableOpacity
+          onPress={this.onResetPasswordPress}
           style={styles.button}
-          disabled={this.state.isLoading}
-        >  
+          disabled={isLoading}
+        >
           <Text style={styles.buttonText}>
-            {this.state.isLoading ? "Sending..." : "Reset Password"}
-          </Text>          
+            {isLoading ? 'Sending...' : 'Reset Password'}
+          </Text>
         </TouchableOpacity>
       </View>
     );
