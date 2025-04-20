@@ -1,23 +1,21 @@
 
 
 import React, { Component } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, StatusBar ,TextInput} from 'react-native';
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { Alert, StatusBar, ScrollView, Text, View, TouchableOpacity } from 'react-native';
+import { Surface } from 'react-native-paper';
+import { Menu, TextInput, Button } from 'react-native-paper';
+import { Dropdown } from 'react-native-paper-dropdown';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { ref, set } from "firebase/database";
 import { auth, database } from '../database/firebase';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from 'react-native-responsive-screen';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import { ScrollView } from "react-native-gesture-handler";
 
-interface SignUpProps {
+interface SignupProps {
   navigation: NativeStackNavigationProp<any>;
 }
 
-interface SignUpState {
+
+interface SignupState {
   displayName: string;
   blood: string;
   cnic: string;
@@ -30,8 +28,9 @@ interface SignUpState {
   errorMessage?: string;
 }
 
-export default class SignUp extends Component<SignUpProps, SignUpState> {
-  constructor(props: SignUpProps) {
+
+export default class Signup extends Component<SignupProps, SignupState> {
+  constructor(props: SignupProps) {
     super(props);
     this.state = {
       displayName: '',
@@ -97,156 +96,110 @@ export default class SignUp extends Component<SignUpProps, SignUpState> {
     }
   };
 
-  render() {
-    const { errorMessage } = this.state;
-
-    return (
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#b22222" />
-        <View style={styles.header}>
-          <Text style={styles.headertext}>Sign Up</Text>
-        </View>
-
-        <ScrollView style={styles.scroldesign}>
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-          {this.renderInput('user', 'Name', 'displayName')}
-          {this.renderInput('at', 'Email', 'email', 'email-address')}
-          {this.renderInput('heart', 'Blood Group', 'blood')}
-          {this.renderInput('id-card', 'CNIC', 'cnic', 'numeric')}
-          {this.renderInput('building', 'City', 'city')}
-          {this.renderInput('phone', 'Phone', 'phone', 'numeric')}
-          {this.renderInput('user-plus', 'Age', 'age', 'numeric')}
-          {this.renderInput('male', 'Gender', 'gender')}
-          {this.renderInput('lock', 'Password', 'password', undefined, true)}
-
-          <TouchableOpacity onPress={this.registerUser} style={styles.button}>
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => this.props.navigation.navigate('Login')} style={styles.fp}>
-            <Text style={styles.txt}>Already Registered? Click here to login</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    );
-  }
-
   renderInput = (
-    icon: string,
-    placeholder: string,
-    stateKey: keyof SignUpState,
+    label: string,
+    stateKey: keyof SignupState,
     keyboardType: 'default' | 'numeric' | 'email-address' = 'default',
     secureTextEntry = false
   ) => {
     return (
-      <View style={styles.inputContainer}>
-        <Icon style={{ marginLeft: 10 }} name={icon} color="black" size={21} />
-        <TextInput
-          style={styles.inputs}
-          placeholder={placeholder}
-          keyboardType={keyboardType}
-          returnKeyType="next"
-          secureTextEntry={secureTextEntry}
-          onChangeText={(value) => this.setState({ [stateKey]: value } as Pick<SignUpState, keyof SignUpState>)}
+      <TextInput
+        label={label}
+        mode="outlined"
+        style={{ marginBottom: 16 }}
+        keyboardType={keyboardType}
+        secureTextEntry={secureTextEntry}
+        value={this.state[stateKey]}
+        onChangeText={(text) => this.setState({ [stateKey]: text } as any)}
+      />
+    );
+  };
+
+  renderDropdown = (
+    label: string,
+    stateKey: keyof SignupState,
+    options: string[],
+  ) => {
+    const value = this.state[stateKey] as string;
+  
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <Dropdown
+          label={label}
+          placeholder={`Select ${label}`}
+          options={options.map((option) => ({
+            label: option,
+            value: option,
+            key: option,
+          }))}
+          value={value}
+          onSelect={(val?: string) => {
+            this.setState({
+              [stateKey]: val ?? '',
+            } as Pick<SignupState, keyof SignupState>);
+          }}
         />
       </View>
     );
   };
-}
+  
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    height: heightPercentageToDP(100),
-    width: widthPercentageToDP(100),
-    
-  },
-  
-  header:
-  {
-    height: heightPercentageToDP(30),
-    width: widthPercentageToDP(100),
-    backgroundColor:'#b22222',
-    borderBottomLeftRadius:70,
-    justifyContent:'center'
-  },
-  headertext:
-  {
-    color: '#fff',
-    fontSize: 40,
-    fontWeight: 'bold',
-    marginStart:30
-  },
-  scroldesign:{
-    height: heightPercentageToDP(70),
-    width: widthPercentageToDP(100),
-    backgroundColor:'#fff'
-  },
-  inputContainer: {
-    borderBottomColor: '#b22222',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    width: widthPercentageToDP(80),
-    height: heightPercentageToDP(5),
-    flexDirection: 'row',
-    alignItems:'center',
-    marginTop:30
-  },
-  inputs:{
-    height: heightPercentageToDP(5),
-    marginLeft:13
-  },
-  loginText: {
-    color: '#b22222',
-    marginTop: 25,
-    textAlign: 'center'
-  },
-  preloader: {
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff'
-  },
-  
-  button: {
-    backgroundColor: '#b22222',
-    borderRadius:20,
-    width: widthPercentageToDP(60),
-    height: heightPercentageToDP(6),
-    flexDirection: 'row',
-    alignItems:'center',
-    justifyContent:'center',
-    marginTop:15,
-    elevation:8,
-    marginLeft:30
-  },
-  buttonText: {
-    fontSize: 20,
-    textAlign: "center",
-    color: '#fff',
-    fontWeight:'bold'
-  },
-  fp:
-  {
-    marginTop:25,
-    justifyContent:'flex-end',
-    color:'#47459E',
-    fontSize:15,
-    marginLeft:7
-  },
-  txt: {
-    color: '#b22222',
-    fontWeight: 'bold',
-    fontSize:15
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-});
+  render() {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <StatusBar barStyle="light-content" backgroundColor="#b22222" />
+
+        {/* Header */}
+        <View style={{
+          height: '30%',
+          backgroundColor: '#b22222',
+          borderBottomLeftRadius: 70,
+          justifyContent: 'center',
+          paddingLeft: 30
+        }}>
+          <Text style={{ color: '#fff', fontSize: 40, fontWeight: 'bold' }}>Sign Up</Text>
+        </View>
+
+        {/* Form */}
+        <Surface style={{ flex: 1, padding: 20, backgroundColor: '#fff' }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+            {this.state.errorMessage && (
+              <Text style={{ color: 'red', marginBottom: 16 }}>{this.state.errorMessage}</Text>
+            )}
+
+            {this.renderInput('Name', 'displayName')}
+            {this.renderInput('Email', 'email', 'email-address')}
+            {this.renderDropdown('Blood Group', 'blood', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])}
+            {this.renderInput('CNIC', 'cnic', 'numeric')}
+            {this.renderInput('City', 'city')}
+            {this.renderInput('Phone', 'phone', 'numeric')}
+            {this.renderInput('Age', 'age', 'numeric')}
+            {this.renderDropdown('Gender', 'gender', ['Male', 'Female', 'Other'])}
+            {this.renderInput('Password', 'password', 'default', true)}
+
+            <Button
+              mode="contained"
+              onPress={this.registerUser}
+              style={{ marginTop: 20, borderRadius: 20, backgroundColor: '#b22222' }}
+              contentStyle={{ height: 50, justifyContent: 'center' }}
+              labelStyle={{ fontSize: 18, fontWeight: 'bold' }}
+            >
+              Sign Up
+            </Button>
+
+            <TouchableOpacity onPress={() => this.props.navigation.navigate('Login')} style={{ marginTop: 25 }}>
+              <Text style={{
+              marginTop: 10,
+              color: '#b22222',
+              textAlign: 'center',
+              fontSize: 15,
+            }}>
+                Already Registered? Click here to login
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </Surface>
+      </View>
+    );
+  }
+}
