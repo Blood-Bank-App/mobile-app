@@ -1,25 +1,24 @@
-
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-import Login from './components/login';
-import Userprofile from './components/Userprofile';
-import Signup from './components/signup';
-import Dashboard from './components/dashboard';
+import Login from './components/Login';
+import UserProfile from './components/UserProfile';
+import SignUp from './components/SignUp';
+import Dashboard from './components/Dashboard';
 import SplashScreen from './components/SplashScreen';
-import Forgetpass from './components/Forgetpass';
+import ForgetPass from './components/ForgetPass';
 import Feedback from './components/Feedback';
-import Smssend from './components/Smssend';
-import Findblooddonor from './components/Findblooddonor';
+import SmsSend from './components/SmsSend';
+import FindBloodDonor from './components/FindBloodDonor';
 import Setting from './components/Setting';
-import Watsapp from './components/watsapp';
+import Whatsapp from './components/Whatsapp';
+import { RootStackParamList } from 'types';
 
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
-
-function MyStack() {
+function MyStack(): JSX.Element {
   return (
     <Stack.Navigator
       initialRouteName="SplashScreen"
@@ -27,28 +26,24 @@ function MyStack() {
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: '#b22222',
-          height:70
+          height: 70
         },
-        
         headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
       }}>
-        <Stack.Screen 
+      <Stack.Screen 
         name="SplashScreen" 
         component={SplashScreen} 
         options={{headerShown: false}}  
-      
-      
       />       
       
-
       <Stack.Screen 
-        name="Signup" 
-        component={Signup} 
+        name="SignUp" 
+        component={SignUp} 
         options={{
-          title: 'Signup',
+          title: 'SignUp',
           headerLeft: () => null,
           headerShown: false
         }}
@@ -62,7 +57,7 @@ function MyStack() {
           headerShown: false
         }}
       />
-       <Stack.Screen 
+      <Stack.Screen 
         name="Setting" 
         component={Setting} 
         options={{
@@ -73,68 +68,57 @@ function MyStack() {
       />
 
       <Stack.Screen 
-        name="Findblooddonor" 
-        component={Findblooddonor} 
-          options={{ title: 'Find Blood Donor' }}
-        
+        name="FindBloodDonor" 
+        component={FindBloodDonor} 
+        options={{ title: 'Find Blood Donor' }}
       />
 
       <Stack.Screen 
-        name="Smssend" 
-        component={Smssend} 
-        options={{ title: 'Sms Send'  }}
+        name="SmsSend" 
+        component={SmsSend} 
+        options={{ title: 'Sms Send' }}
       />
 
       <Stack.Screen 
-        name="watsapp" 
-        component={Watsapp} 
-        options={{ title: 'Whatsapp'  }}
+        name="Whatsapp" 
+        component={Whatsapp} 
+        options={{ title: 'Whatsapp' }}
       /> 
 
-     <Stack.Screen 
+      <Stack.Screen 
         name="Feedback" 
         component={Feedback} 
         options={{ title: 'Feed Back' }}
       />
 
-       <Stack.Screen 
-        name="Userprofile" 
-        component={Userprofile} 
-        options={{ title: 'User Profile'  }}
+      <Stack.Screen 
+        name="UserProfile" 
+        component={UserProfile} 
+        options={{ title: 'User Profile' }}
       />
-       <Stack.Screen 
-        name="Forgetpass" 
-        component={Forgetpass} 
-        options={{ title: 'Change Pass'  }} 
-      
-      
+      <Stack.Screen 
+        name="ForgetPass" 
+        component={ForgetPass} 
+        options={{ title: 'Change Pass' }}
       />       
 
       <Stack.Screen 
-       name="Dashboard" 
-       component={Dashboard} 
-       options={{
-         title: 'Dashboard',
-         headerLeft: () => null,
-         headerShown: true
-       }}
+        name="Dashboard" 
+        component={Dashboard} 
+        options={{
+          title: 'Dashboard',
+          headerLeft: () => null,
+          headerShown: true
+        }}
       />
     </Stack.Navigator>
-       
-
-
   );
 }
 
-export default function App() {
-  try {
+export default function App(): JSX.Element {
   return (
     <NavigationContainer>
       <MyStack />
     </NavigationContainer>
   );
-} catch (e) {
-  console.error('App crashed:', e);
-  return null;
-}
 }

@@ -7,63 +7,81 @@ import {
 import { database } from '../database/firebase';
 import { ref, onValue } from 'firebase/database';
 
-export default class Findblooddonor extends Component {
-  constructor(props) {
+// Defining types for the state and donor items
+interface Donor {
+  key: string;
+  name: string;
+  age: string;
+  blood: string;
+  phone: string;
+  city: string;
+  email: string;
+  gender: string;
+}
+
+interface FindblooddonorState {
+  list: Donor[];
+  phoneNumber: string;
+}
+
+export default class Findblooddonor extends Component<{}, FindblooddonorState> {
+  constructor(props: {}) {
     super(props);
     this.state = {
       list: [],
-      phoneNumber: '03101095316' // Default phone number
+      phoneNumber: '03101095316', // Default phone number
     };
   }
 
-  dialCall = (phoneNumber) => {
-    let number = phoneNumber || this.state.phoneNumber;
-    let scheme = Platform.OS === 'android' ? 'tel:' : 'telprompt:';
+  dialCall = (phoneNumber: string) => {
+    const number = phoneNumber || this.state.phoneNumber;
+    const scheme = Platform.OS === 'android' ? 'tel:' : 'telprompt:';
     Linking.openURL(`${scheme}${number}`);
   };
 
-  sendSms = (phoneNumber) => {
-    let number = phoneNumber || this.state.phoneNumber;
-    let message = 'Hello, I need blood donation. Please help!';
-    let separator = Platform.OS === 'ios' ? '&' : '?';
-    let sms = `sms:${number}${separator}body=${message}`;
+  sendSms = (phoneNumber: string) => {
+    const number = phoneNumber || this.state.phoneNumber;
+    const message = 'Hello, I need blood donation. Please help!';
+    const separator = Platform.OS === 'ios' ? '&' : '?';
+    const sms = `sms:${number}${separator}body=${message}`;
     Linking.openURL(sms);
   };
 
-  sendWhatsApp = (phoneNumber) => {
+  sendWhatsApp = (phoneNumber: string) => {
     let number = phoneNumber || this.state.phoneNumber;
-    // Make sure the number starts with country code without +
+
+    // Ensure the number starts with country code without "+"
     if (number.startsWith('+')) {
       number = number.substring(1);
     } else if (number.startsWith('0')) {
       // Assuming Pakistan country code is 92
       number = '92' + number.substring(1);
     }
-    
+
     Linking.openURL(`http://api.whatsapp.com/send?phone=${number}`);
   };
 
   componentDidMount() {
-    // Using the new Firebase v9 SDK
+    // Using Firebase Realtime Database to fetch users
     const usersRef = ref(database, 'users');
     onValue(usersRef, (snapshot) => {
-      const li = [];
+      const li: Donor[] = [];
       snapshot.forEach((child) => {
         li.push({
-          key: child.key,
+          key: child.key!,
           name: child.val().DisplayName,
           age: child.val().Age,
           blood: child.val().Blood,
           phone: child.val().Phone,
           city: child.val().City,
           email: child.val().Email,
-          gender: child.val().Gender
+          gender: child.val().Gender,
         });
       });
       this.setState({ list: li });
     });
   }
-
+  
   render() {
     return (
       <View style={styles.container}>
