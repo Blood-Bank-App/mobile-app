@@ -43,27 +43,26 @@ export default class Login extends Component<LoginProps, LoginState> {
   userLogin = () => {
     const { email, password } = this.state;
 
-    if (email === '' || password === '') {
-      Alert.alert('Enter details to sign in!');
+    if (!email || !password) {
+      Alert.alert('Error', 'Enter details to sign in!');
       return;
     }
 
     this.setState({ isLoading: true });
 
     signInWithEmailAndPassword(auth, email, password)
-      .then((res) => {
-        this.setState({ isLoading: false, email: '', password: '' });
+      .then(() => {
+        this.setState({ email: '', password: '', isLoading: false });
+        Alert.alert('Success', 'Logged in successfully');
         this.props.navigation.navigate('Dashboard');
       })
       .catch((error) => {
-        this.setState(
-          { isLoading: false, errorMessage: error.message },
-          () => {
-            // alert(this.state.errorMessage);
-          }
-        );
+        this.setState({ isLoading: false });
+        Alert.alert('Login Failed', "Invalid Credentials");
+        // Alert.alert('Login Failed', error.message);
       });
   };
+
 
   render() {
     if (this.state.isLoading) {
@@ -105,9 +104,16 @@ export default class Login extends Component<LoginProps, LoginState> {
           />
 
           {/* Buttons */}
-          <Button mode="contained" onPress={this.userLogin} style={{ marginBottom: 10 }}>
+          <Button
+            mode="contained"
+            onPress={this.userLogin}
+            loading={this.state.isLoading}
+            disabled={this.state.isLoading}
+            style={{ marginBottom: 10 }}
+          >
             Login
           </Button>
+
 
           <Button mode="outlined" onPress={() => this.props.navigation.navigate('Signup')}>
             Sign Up

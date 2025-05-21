@@ -6,44 +6,47 @@ import { ref, push } from 'firebase/database'; // Import required functions from
 
 interface FeedbackState {
   description: string;
+  loading: boolean;
 }
+
 
 export default class Feedback extends Component<{}, FeedbackState> {
   constructor(props: {}) {
     super(props);
     this.state = {
       description: '',
+      loading: false,
     };
   }
 
-  // Function to handle input changes
   handleChange = (text: string) => {
     this.setState({ description: text });
   };
 
-
-  // Function to submit feedback to Firebase
-  handleSubmit = () => {
+  handleSubmit = async () => {
     const { description } = this.state;
-    if (description === '') {
+    if (description.trim() === '') {
       Alert.alert('Error', 'Text input cannot be empty');
-    } else {
-      this.addItem(description);
+      return;
+    }
+
+    this.setState({ loading: true });
+
+    try {
+      const feedbackRef = ref(database, '/feedback');
+      await push(feedbackRef, { description });
+      this.setState({ description: '' });
       Alert.alert('Success', 'Feedback submitted successfully');
+    } catch (error: any) {
+      Alert.alert('Error', `Failed to submit feedback: ${error.message}`);
+    } finally {
+      this.setState({ loading: false });
     }
   };
 
-  // Firebase function to add item to the feedback collection
-  addItem = (item: string) => {
-    const feedbackRef = ref(database, '/feedback');
-    push(feedbackRef, {
-      description: item,
-    }).catch((error) => {
-      Alert.alert('Error', `Failed to submit feedback: ${error.message}`);
-    });
-  };
-
   render() {
+    const { description, loading } = this.state;
+
     return (
       <KeyboardAvoidingView
         style={styles.container}
@@ -61,6 +64,7 @@ export default class Feedback extends Component<{}, FeedbackState> {
               label="Tell us more..."
               multiline
               numberOfLines={5}
+              value={description}
               onChangeText={this.handleChange}
               placeholder="Type something about the app"
               style={styles.input}
@@ -71,6 +75,8 @@ export default class Feedback extends Component<{}, FeedbackState> {
               onPress={this.handleSubmit}
               style={styles.button}
               contentStyle={{ paddingVertical: 6 }}
+              loading={loading}
+              disabled={loading}
             >
               Submit
             </Button>

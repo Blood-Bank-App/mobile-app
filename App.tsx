@@ -77,11 +77,7 @@ function AppStack() {
       <Stack.Screen 
         name="Setting" 
         component={Setting} 
-        options={{
-          title: 'Setting',
-          headerLeft: () => null,
-          headerShown: true
-        }}
+        options={{ title: 'Setting' }}
       />
 
       <Stack.Screen 

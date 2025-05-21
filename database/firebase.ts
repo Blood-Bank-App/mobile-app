@@ -18,11 +18,11 @@ const firebaseConfig: FirebaseOptions = {
 const app: FirebaseApp = initializeApp(firebaseConfig);
 
 // ✅ Fix: initialize auth with persistence for React Native
-const auth: Auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// const auth: Auth = initializeAuth(app, {
+//   persistence: getReactNativePersistence(AsyncStorage),
+// });
 
-// const auth: Auth = initializeAuth(app);
+const auth: Auth = initializeAuth(app);
 // 🔄 Realtime DB
 const database: Database = getDatabase(app);
 
