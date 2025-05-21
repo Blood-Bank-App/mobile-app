@@ -11,10 +11,16 @@ import {
   widthPercentageToDP,
   heightPercentageToDP,
 } from "react-native-responsive-screen";
+import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "types";
+
+type SettingNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Setting'>;
+type SettingRouteProp = RouteProp<RootStackParamList, 'Setting'>;
 
 interface SettingProps {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: SettingNavigationProp;
+  route: SettingRouteProp;
 }
 
 interface SettingState {

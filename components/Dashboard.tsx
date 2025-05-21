@@ -10,15 +10,18 @@ import {
   Share,
 } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
-import type { NavigationProp } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { auth } from "../database/firebase";
+import { RootStackParamList } from "types";
 
 
-// TypeScript interfaces
+type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+type DashboardRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
+
 interface DashboardProps {
-  navigation: {
-    navigate: (screen: string) => void;
-  };
+  navigation: DashboardNavigationProp;
+  route: DashboardRouteProp;
 }
 
 interface DashboardState {

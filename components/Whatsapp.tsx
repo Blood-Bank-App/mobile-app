@@ -30,7 +30,7 @@ export default function Whatsapp() {
 
     Linking.openURL(URL)
       .then((data) => {
-        console.log("WhatsApp Opened");
+        // console.log("WhatsApp Opened");
       })
       .catch(() => {
         Alert.alert("Make sure Whatsapp installed on your device");

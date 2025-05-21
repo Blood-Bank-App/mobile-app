@@ -4,14 +4,10 @@ import { Text, Surface } from "react-native-paper";
 import * as Animatable from "react-native-animatable";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from "types";
 
-type RootStackParamList = {
-  Splash: undefined;
-  Login: undefined;
-};
-
-type SplashScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Splash'>;
-type SplashScreenRouteProp = RouteProp<RootStackParamList, 'Splash'>;
+type SplashScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SplashScreen'>;
+type SplashScreenRouteProp = RouteProp<RootStackParamList, 'SplashScreen'>;
 
 type Props = {
   navigation: SplashScreenNavigationProp;

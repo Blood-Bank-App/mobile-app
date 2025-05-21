@@ -8,7 +8,8 @@
     "lib": [
       "es2017"
     ],
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "noEmit": true,
     "strict": true,
     "target": "esnext",
