@@ -1,12 +1,6 @@
 import React, { Component } from 'react';
-import {
-  View,
-  Text,
-  TouchableHighlight,
-  StyleSheet,
-  TextInput,
-  Alert
-} from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Text, TextInput, Button, Card, useTheme } from 'react-native-paper';
 import { database } from '../database/firebase'; // Import the firebase configuration
 import { ref, push } from 'firebase/database'; // Import required functions from Firebase
 
@@ -51,63 +45,68 @@ export default class Feedback extends Component<{}, FeedbackState> {
 
   render() {
     return (
-      <View style={styles.main}>
-        <Text style={styles.title}>Are you satisfied with using this App?</Text>
-        <TextInput
-          style={styles.itemInput}
-          multiline={true}
-          numberOfLines={4}
-          placeholder="Type something about the app"
-          onChange={this.handleChange}
-        />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Card style={styles.card}>
+          <Card.Title title="We value your feedback" />
+          <Card.Content>
+            <Text style={styles.question}>
+              Are you satisfied with using this App?
+            </Text>
 
-        <TouchableHighlight style={styles.button} underlayColor="white" onPress={this.handleSubmit}>
-          <Text style={styles.buttonText}>Submit</Text>
-        </TouchableHighlight>
-      </View>
+            <TextInput
+              mode="outlined"
+              label="Tell us more..."
+              multiline
+              numberOfLines={5}
+              onChangeText={this.handleChange}
+              placeholder="Type something about the app"
+              style={styles.input}
+            />
+
+            <Button
+              mode="contained"
+              onPress={this.handleSubmit}
+              style={styles.button}
+              contentStyle={{ paddingVertical: 6 }}
+            >
+              Submit
+            </Button>
+          </Card.Content>
+        </Card>
+      </KeyboardAvoidingView>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  main: {
+  container: {
     flex: 1,
-    padding: 30,
-    flexDirection: 'column',
+    padding: 20,
     justifyContent: 'center',
+    backgroundColor: '#f5f5f5',
   },
-  title: {
-    marginBottom: 20,
-    fontSize: 25,
-    textAlign: 'center'
+  card: {
+    elevation: 4,
+    borderRadius: 12,
+    padding: 10,
   },
-  itemInput: {
-    justifyContent: "flex-start",
-    height: 130,
-    padding: 4,
-    marginRight: 5,
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: 'black',
-    borderRadius: 8,
-    color: 'black'
-  },
-  buttonText: {
+  question: {
     fontSize: 18,
-    color: '#fff',
-    alignSelf: 'center'
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+    color: '#333',
+  },
+  input: {
+    marginBottom: 20,
+    backgroundColor: 'white',
   },
   button: {
-    height: 45,
-    flexDirection: 'row',
-    backgroundColor: '#b22222',
-    borderColor: 'white',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
-    marginTop: 10,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-    elevation:8
-  }
+    alignSelf: 'center',
+    width: '60%',
+    borderRadius: 10,
+  },
 });

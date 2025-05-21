@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Linking, StatusBar, Image, Platform } from 'react-native';
-import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from 'react-native-responsive-screen';
+import { View, FlatList, StatusBar, Linking, Platform } from "react-native";
+import { Text, Card, Button, IconButton } from "react-native-paper";
 import { database } from '../database/firebase';
 import { ref, onValue } from 'firebase/database';
 
 // Defining types for the state and donor items
+
 interface Donor {
   key: string;
   name: string;
@@ -29,8 +27,32 @@ export default class Findblooddonor extends Component<{}, FindblooddonorState> {
     super(props);
     this.state = {
       list: [],
-      phoneNumber: '03101095316', // Default phone number
+      phoneNumber: '03101095316', // default number
     };
+  }
+
+  componentDidMount(): void {
+    const usersRef = ref(database, 'users');
+
+    onValue(usersRef, (snapshot) => {
+      const donors: Donor[] = [];
+
+      snapshot.forEach((child) => {
+        const val = child.val();
+        donors.push({
+          key: child.key ?? '',
+          name: val.DisplayName ?? '',
+          age: val.Age ?? '',
+          blood: val.Blood ?? '',
+          phone: val.Phone ?? '',
+          city: val.City ?? '',
+          email: val.Email ?? '',
+          gender: val.Gender ?? '',
+        });
+      });
+
+      this.setState({ list: donors });
+    });
   }
 
   dialCall = (phoneNumber: string) => {
@@ -50,178 +72,98 @@ export default class Findblooddonor extends Component<{}, FindblooddonorState> {
   sendWhatsApp = (phoneNumber: string) => {
     let number = phoneNumber || this.state.phoneNumber;
 
-    // Ensure the number starts with country code without "+"
+    // Format for international
     if (number.startsWith('+')) {
       number = number.substring(1);
     } else if (number.startsWith('0')) {
-      // Assuming Pakistan country code is 92
-      number = '92' + number.substring(1);
+      number = '92' + number.substring(1); // Pakistan country code
     }
 
-    Linking.openURL(`http://api.whatsapp.com/send?phone=${number}`);
+    Linking.openURL(`https://api.whatsapp.com/send?phone=${number}`);
   };
-
-  componentDidMount() {
-    // Using Firebase Realtime Database to fetch users
-    const usersRef = ref(database, 'users');
-    onValue(usersRef, (snapshot) => {
-      const li: Donor[] = [];
-      snapshot.forEach((child) => {
-        li.push({
-          key: child.key!,
-          name: child.val().DisplayName,
-          age: child.val().Age,
-          blood: child.val().Blood,
-          phone: child.val().Phone,
-          city: child.val().City,
-          email: child.val().Email,
-          gender: child.val().Gender,
-        });
-      });
-      this.setState({ list: li });
-    });
-  }
   
   render() {
     return (
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor='#b22222' />
+      <View style={{ flex: 1, padding: 16, backgroundColor: "#f8f8f8" }}>
+        <StatusBar barStyle="light-content" backgroundColor="#b22222" />
+
         <FlatList
           data={this.state.list}
           keyExtractor={(item) => item.key}
-          renderItem={({ item }) => {
-            return (
-              <View style={styles.donorCard}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.text}>Name: {item.name}</Text>
-                  <TouchableOpacity style={styles.button}>
-                    <Text style={styles.buttonText}>{item.blood}</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.infoContainer}>
-                  <Text style={styles.in}>
-                    Age: {item.age} {'\n'}
-                    Phone: {item.phone} {'\n'}
-                    City: {item.city} {'\n'}
-                    Email: {item.email} {'\n'}
-                    Gender: {item.gender}
+          renderItem={({ item }) => (
+            <Card style={{ marginBottom: 16, elevation: 3 }}>
+              <Card.Content>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text variant="titleMedium" style={{ fontWeight: "bold" }}>
+                    {item.name}
                   </Text>
-                  
-                  <View style={styles.actionButtons}>
-                    <TouchableOpacity 
-                      style={styles.button1} 
-                      onPress={() => this.dialCall(item.phone)}
-                    >
-                      <Image style={styles.img} source={require('../assets/phone.png')} />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={styles.button2} 
-                      onPress={() => this.sendSms(item.phone)}
-                    >
-                      <Image style={styles.img} source={require('../assets/sms.png')} />
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                      style={styles.button3} 
-                      onPress={() => this.sendWhatsApp(item.phone)}
-                    >
-                      <Image style={styles.img} source={require('../assets/wats.png')} />
-                    </TouchableOpacity>
-                  </View>
+                  <Button
+                    mode="contained"
+                    buttonColor="#b22222"
+                    textColor="white"
+                    contentStyle={{ paddingHorizontal: 12 }}
+                    labelStyle={{ fontWeight: "bold" }}
+                  >
+                    {item.blood}
+                  </Button>
                 </View>
-              </View>
-            );
-          }}
+
+                <View style={{ marginBottom: 8 }}>
+                  <Text variant="bodyMedium" style={{ marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "bold" }}>Age:</Text> {item.age}
+                  </Text>
+                  <Text variant="bodyMedium" style={{ marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "bold" }}>Phone:</Text> {item.phone}
+                  </Text>
+                  <Text variant="bodyMedium" style={{ marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "bold" }}>City:</Text> {item.city}
+                  </Text>
+                  <Text variant="bodyMedium" style={{ marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "bold" }}>Email:</Text> {item.email}
+                  </Text>
+                  <Text variant="bodyMedium">
+                    <Text style={{ fontWeight: "bold" }}>Gender:</Text> {item.gender}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    marginTop: 12,
+                  }}
+                >
+                  <IconButton
+                    icon="phone"
+                    iconColor="#4CAF50"
+                    size={24}
+                    onPress={() => this.dialCall(item.phone)}
+                  />
+                  <IconButton
+                    icon="message-text"
+                    iconColor="#2196F3"
+                    size={24}
+                    onPress={() => this.sendSms(item.phone)}
+                  />
+                  <IconButton
+                    icon="whatsapp"
+                    iconColor="#25D366"
+                    size={24}
+                    onPress={() => this.sendWhatsApp(item.phone)}
+                  />
+                </View>
+              </Card.Content>
+            </Card>
+          )}
         />
       </View>
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-  },
-  donorCard: {
-    marginBottom: 15,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    overflow: 'hidden',
-    elevation: 3,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  infoContainer: {
-    padding: 10,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
-    paddingBottom: 10,
-  },
-  img: {
-    width: widthPercentageToDP(11),
-    height: heightPercentageToDP(6),
-  },
-  text: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  in: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  button: {
-    backgroundColor: '#b22222',
-    borderRadius: 35,
-    width: widthPercentageToDP(11),
-    height: heightPercentageToDP(5),
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  button1: {
-    backgroundColor: '#fff',
-    borderRadius: 35,
-    width: widthPercentageToDP(17),
-    height: heightPercentageToDP(9),
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-  button2: {
-    backgroundColor: '#fff',
-    borderRadius: 35,
-    width: widthPercentageToDP(17),
-    height: heightPercentageToDP(9),
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-  button3: {
-    backgroundColor: '#fff',
-    borderRadius: 35,
-    width: widthPercentageToDP(17),
-    height: heightPercentageToDP(9),
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-});

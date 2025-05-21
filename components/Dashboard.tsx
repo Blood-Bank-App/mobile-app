@@ -2,14 +2,14 @@
 
 import React, { Component } from "react";
 import {
-  StyleSheet,
   View,
-  Text,
-  TouchableOpacity,
   Image,
+  StyleSheet,
   StatusBar,
+  ScrollView,
   Share,
 } from 'react-native';
+import { Card, Text, Button } from 'react-native-paper';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { auth } from "../database/firebase";
@@ -61,128 +61,95 @@ export default class Dashboard extends Component<DashboardProps, DashboardState>
     }
   };
 
+  renderCard = (
+    title: string,
+    icon: any,
+    onPress: () => void
+  ) => (
+    <Card style={styles.card} onPress={onPress}>
+      <Card.Content style={styles.cardContent}>
+        <Image source={icon} style={styles.icon} />
+        <Text style={styles.cardTitle}>{title}</Text>
+      </Card.Content>
+    </Card>
+  );
+
 
   render() {
+    const { navigation } = this.props;
+
     return (
-      <View style={styles.container}>
-        <Text style={styles.textStyle}>Hello, {this.state.email}</Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#b22222" />
+        <Text style={styles.greetingText}>Hello, {this.state.email}</Text>
 
-        <View style={styles.containerButton}>
-          <StatusBar barStyle="light-content" backgroundColor="#b22222" />
-          <View style={styles.btncontainer1}>
-            <TouchableOpacity
-              style={styles.design}
-              onPress={() => this.props.navigation.navigate("FindBloodDonor")}
-            >
-              <Image
-                style={styles.img}
-                source={require("../assets/blood.png")}
-              />
-              <Text style={styles.Text}>Find Blood Donor</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.design} onPress={this.onShare}>
-              <Image
-                style={styles.img}
-                source={require("../assets/sharing.png")}
-              />
-              <Text style={styles.Text}>Share</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.btncontainer2}>
-            <TouchableOpacity
-              style={styles.design}
-              onPress={() => this.props.navigation.navigate("UserProfile")}
-            >
-              <Image
-                style={styles.img}
-                source={require("../assets/profile.png")}
-              />
-              <Text style={styles.Text}>User Profile</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.design}
-              onPress={() => this.props.navigation.navigate("Feedback")}
-            >
-              <Image
-                style={styles.img}
-                source={require("../assets/feedback.png")}
-              />
-              <Text style={styles.Text}>Feedback</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.btncontainer3}>
-            <TouchableOpacity
-              style={styles.design}
-              onPress={() => this.props.navigation.navigate("Setting")}
-            >
-              <Image
-                style={styles.img}
-                source={require("../assets/setting.png")}
-              />
-              <Text style={styles.Text}>Setting</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.design}
-              onPress={() => this.props.navigation.navigate("Login")}
-            >
-              <Image
-                style={styles.img}
-                source={require("../assets/exit.png")}
-              />
-              <Text style={styles.Text}>Logout</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.cardRow}>
+          {this.renderCard('Find Blood Donor', require('../assets/blood.png'), () =>
+            navigation.navigate('FindBloodDonor')
+          )}
+          {this.renderCard('Share', require('../assets/sharing.png'), this.onShare)}
         </View>
-      </View>
+
+        <View style={styles.cardRow}>
+          {this.renderCard('User Profile', require('../assets/profile.png'), () =>
+            navigation.navigate('UserProfile')
+          )}
+          {this.renderCard('Feedback', require('../assets/feedback.png'), () =>
+            navigation.navigate('Feedback')
+          )}
+        </View>
+
+        <View style={styles.cardRow}>
+          {this.renderCard('Setting', require('../assets/setting.png'), () =>
+            navigation.navigate('Setting')
+          )}
+          {this.renderCard('Logout', require('../assets/exit.png'), () =>
+            navigation.navigate('Login')
+          )}
+        </View>
+      </ScrollView>
     );
   }
 }
 
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    paddingTop: 40,
+    backgroundColor: '#f5f5f5',
+    flexGrow: 1,
+    alignItems: 'center',
   },
-  textStyle: {
-    fontSize: 18,
+  greetingText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 30,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: 20,
   },
-  containerButton: {
-    flex: 1,
-    justifyContent: 'space-around',
+  card: {
+    width: '48%',
+    elevation: 3,
+    borderRadius: 10,
+  },
+  cardContent: {
     alignItems: 'center',
   },
-  btncontainer1: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  btncontainer2: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  btncontainer3: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  design: {
-    alignItems: 'center',
-    margin: 10,
-  },
-  img: {
+  icon: {
     width: 50,
     height: 50,
+    marginBottom: 10,
   },
-  Text: {
+  cardTitle: {
     fontSize: 14,
-    marginTop: 5,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#333',
   },
 });

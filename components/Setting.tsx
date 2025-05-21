@@ -43,7 +43,7 @@ export default class Setting extends React.Component<
       <View style={{ paddingTop: 50, alignItems: "center" }}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => this.props.navigation.navigate("ForgetPass")}
+          onPress={() => this.props.navigation.navigate("ForgotPassword")}
         >
           <Text style={styles.buttonText}>Change Password</Text>
         </TouchableOpacity>
