@@ -35,7 +35,7 @@ const redTheme = {
 };
 
 
-function AppStack(): JSX.Element {
+function AppStack() {
   return (
     <Stack.Navigator
       initialRouteName="SplashScreen"
@@ -132,7 +132,7 @@ function AppStack(): JSX.Element {
   );
 }
 
-export default function App(): JSX.Element {
+export default function App() {
   return (
     <NavigationContainer>
       <PaperProvider theme={redTheme}>

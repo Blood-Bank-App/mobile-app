@@ -22,6 +22,7 @@ const auth: Auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
+// const auth: Auth = initializeAuth(app);
 // 🔄 Realtime DB
 const database: Database = getDatabase(app);
 

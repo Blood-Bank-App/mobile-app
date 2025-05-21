@@ -4,9 +4,16 @@ import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../database/firebase';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from 'types';
+
+
+type LoginNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+type LoginRouteProp = RouteProp<RootStackParamList, 'Login'>;
 
 interface LoginProps {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: LoginNavigationProp;
+  route: LoginRouteProp;
 }
 
 interface LoginState {
@@ -45,7 +52,6 @@ export default class Login extends Component<LoginProps, LoginState> {
 
     signInWithEmailAndPassword(auth, email, password)
       .then((res) => {
-        console.log('User logged-in successfully!', res);
         this.setState({ isLoading: false, email: '', password: '' });
         this.props.navigation.navigate('Dashboard');
       })

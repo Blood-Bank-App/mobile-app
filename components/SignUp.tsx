@@ -9,11 +9,17 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { ref, set } from "firebase/database";
 import { auth, database } from '../database/firebase';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from 'types';
+
+
+type SignupNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
+type SignupRouteProp = RouteProp<RootStackParamList, 'Signup'>;
 
 interface SignupProps {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: SignupNavigationProp;
+  route: SignupRouteProp;
 }
-
 
 interface SignupState {
   displayName: string;
@@ -27,7 +33,6 @@ interface SignupState {
   password: string;
   errorMessage?: string;
 }
-
 
 export default class Signup extends Component<SignupProps, SignupState> {
   constructor(props: SignupProps) {

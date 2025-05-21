@@ -9,18 +9,19 @@ import {
   Image,
   StatusBar,
   Share,
-} from "react-native";
+} from 'react-native';
+import { RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { auth } from "../database/firebase";
-import {
-  widthPercentageToDP,
-  heightPercentageToDP,
-} from "react-native-responsive-screen";
+import { RootStackParamList } from "types";
 
-// TypeScript interfaces
+
+type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
+type DashboardRouteProp = RouteProp<RootStackParamList, 'Dashboard'>;
+
 interface DashboardProps {
-  navigation: {
-    navigate: (screen: string) => void;
-  };
+  navigation: DashboardNavigationProp;
+  route: DashboardRouteProp;
 }
 
 interface DashboardState {

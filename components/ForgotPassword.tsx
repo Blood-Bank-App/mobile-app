@@ -13,10 +13,18 @@ import {
   widthPercentageToDP,
   heightPercentageToDP,
 } from 'react-native-responsive-screen';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { RootStackParamList } from 'types';
+
+
+type ForgotPasswordNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ForgotPassword'>;
+type ForgotPasswordRouteProp = RouteProp<RootStackParamList, 'ForgotPassword'>;
 
 interface ForgotPasswordProps {
-  navigation: any; // If using React Navigation, you can use proper typing from @react-navigation/native
+  navigation: ForgotPasswordNavigationProp;
+  route: ForgotPasswordRouteProp;
 }
 
 interface ForgotPasswordState {

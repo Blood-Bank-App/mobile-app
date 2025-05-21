@@ -47,7 +47,7 @@ const Smssend = () => {
       if (result === 'sent') {
         Alert.alert('Success', 'SMS Sent Successfully');
       } else {
-        console.log('SMS Result:', result);
+        // console.log('SMS Result:', result);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to send SMS');

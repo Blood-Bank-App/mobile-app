@@ -23,16 +23,14 @@ export default class Feedback extends Component<{}, FeedbackState> {
   }
 
   // Function to handle input changes
-  handleChange = (e: any) => {
-    this.setState({
-      description: e.nativeEvent.text,
-    });
+  handleChange = (text: string) => {
+    this.setState({ description: text });
   };
+
 
   // Function to submit feedback to Firebase
   handleSubmit = () => {
     const { description } = this.state;
-
     if (description === '') {
       Alert.alert('Error', 'Text input cannot be empty');
     } else {
