@@ -1,8 +1,8 @@
 import React, {Component} from 'react';
-import { View, StyleSheet, StatusBar, ScrollView } from 'react-native';
-import { Avatar, TextInput, useTheme, Card, Title } from 'react-native-paper';
+import { View, StyleSheet, StatusBar, ScrollView, Alert } from 'react-native';
+import { Avatar, TextInput, useTheme, Card, Title, Button } from 'react-native-paper';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { onValue, ref } from "firebase/database";
+import { onValue, ref, set } from "firebase/database";
 import { auth, database } from "../database/firebase";
 
 interface State {
@@ -12,6 +12,7 @@ interface State {
   blood: string;
   phone: string;
   gender: string;
+  isSaving: boolean;
 }
 
 export default class Userprofile extends Component<{}, State> {
@@ -24,6 +25,7 @@ export default class Userprofile extends Component<{}, State> {
       blood: "",
       phone: "",
       gender: "",
+      isSaving: false
     };
   }
 
@@ -48,8 +50,38 @@ export default class Userprofile extends Component<{}, State> {
     });
   }
 
-  render() {
+  
+  handleInputChange = (key: keyof State, value: string) => {
+    this.setState({ [key]: value } as unknown as Pick<State, keyof State>);
+  };
+
+  saveProfile = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
     const { displayname, city, age, blood, phone, gender } = this.state;
+
+    this.setState({ isSaving: true });
+
+    try {
+      await set(ref(database, 'users/' + currentUser.uid), {
+        DisplayName: displayname,
+        City: city,
+        Age: age,
+        Blood: blood,
+        Phone: phone,
+        Gender: gender,
+      });
+      Alert.alert('Profile updated successfully!');
+    } catch (err) {
+      Alert.alert('Failed to update profile.', (err as Error).message);
+    } finally {
+      this.setState({ isSaving: false });
+    }
+  };
+
+  render() {
+    const { displayname, city, age, blood, phone, gender, isSaving } = this.state;
     return (
       <ScrollView contentContainerStyle={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#b22222" />
@@ -64,12 +96,22 @@ export default class Userprofile extends Component<{}, State> {
           <Card.Content>
             <Title style={styles.title}>User Information</Title>
 
-            <TextInput label="Full Name" value={displayname} mode="outlined" editable={false} style={styles.input} />
-            <TextInput label="City" value={city} mode="outlined" editable={false} style={styles.input} />
-            <TextInput label="Blood Group" value={blood} mode="outlined" editable={false} style={styles.input} />
-            <TextInput label="Gender" value={gender} mode="outlined" editable={false} style={styles.input} />
-            <TextInput label="Phone" value={phone} mode="outlined" editable={false} style={styles.input} />
-            <TextInput label="Age" value={age} mode="outlined" editable={false} style={styles.input} />
+            <TextInput label="Full Name" value={displayname} onChangeText={(val) => this.handleInputChange('displayname', val)} style={styles.input} mode="outlined" />
+            <TextInput label="City" value={city} onChangeText={(val) => this.handleInputChange('city', val)} style={styles.input} mode="outlined" />
+            <TextInput label="Blood Group" value={blood} onChangeText={(val) => this.handleInputChange('blood', val)} style={styles.input} mode="outlined" />
+            <TextInput label="Gender" value={gender} onChangeText={(val) => this.handleInputChange('gender', val)} style={styles.input} mode="outlined" />
+            <TextInput label="Phone" value={phone} onChangeText={(val) => this.handleInputChange('phone', val)} style={styles.input} mode="outlined" keyboardType="phone-pad" />
+            <TextInput label="Age" value={age} onChangeText={(val) => this.handleInputChange('age', val)} style={styles.input} mode="outlined" keyboardType="numeric" />
+
+            <Button
+              mode="contained"
+              onPress={this.saveProfile}
+              loading={isSaving}
+              disabled={isSaving}
+              style={{ marginTop: 15 }}
+            >
+              {isSaving ? 'Saving...' : 'Save Profile'}
+            </Button>
           </Card.Content>
         </Card>
       </ScrollView>
