@@ -1,12 +1,23 @@
 import { auth, database } from '@/database/firebase';
-import { equalTo, get, orderByChild, query, ref, set } from 'firebase/database';
+import { child, get, ref, update } from 'firebase/database';
 import { UserProfile } from './types';
+
+function pathSafeKey(key: string): string {
+  return key.replace(/[.#$/\[\]]/g, '_');
+}
+
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+}
 
 export async function saveUserProfile(partial: Partial<UserProfile>): Promise<void> {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('Not authenticated');
   const now = Date.now();
-  const existingSnap = await get(ref(database, `users/${uid}`));
+  const key = pathSafeKey(uid);
+  const existingSnap = await get(child(ref(database, 'users'), key));
   const current: Partial<UserProfile> = existingSnap.exists() ? (existingSnap.val() as UserProfile) : {};
   const profile: UserProfile = {
     uid,
@@ -21,24 +32,27 @@ export async function saveUserProfile(partial: Partial<UserProfile>): Promise<vo
     createdAt: (current.createdAt as number) ?? now,
     updatedAt: now,
   };
-  await set(ref(database, `users/${uid}`), profile);
+  // Remove undefined values; update() rejects objects containing undefined
+  const cleaned = stripUndefined(profile) as unknown as Record<string, unknown>;
+  await update(ref(database), { [`users/${key}`]: cleaned });
 }
 
 export async function getUserProfile(uid?: string): Promise<UserProfile | null> {
   const id = uid ?? auth.currentUser?.uid;
   if (!id) return null;
-  const snap = await get(ref(database, `users/${id}`));
+  const key = pathSafeKey(id);
+  const snap = await get(child(ref(database, 'users'), key));
   if (!snap.exists()) return null;
   return snap.val() as UserProfile;
 }
 
 export async function listAvailableDonors(): Promise<UserProfile[]> {
-  // Filter by available == true
-  const donorsRef = query(ref(database, 'users'), orderByChild('available'), equalTo(true));
-  const snap = await get(donorsRef as any);
+  // Prefer a simple fetch + filter to be resilient to legacy data types (e.g., 'true' strings)
+  const snap = await get(ref(database, 'users'));
   if (!snap.exists()) return [];
-  const result: UserProfile[] = Object.values(snap.val());
-  return result;
+  const all = Object.values(snap.val() as Record<string, UserProfile | undefined>)
+    .filter(Boolean) as UserProfile[];
+  return all.filter((u) => (u as any)?.available === true || (u as any)?.available === 'true');
 }
 
 

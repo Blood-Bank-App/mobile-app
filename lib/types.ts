@@ -23,7 +23,8 @@ export type BloodRequest = {
   unitsRequired?: number;
   neededBy?: number;
   notes?: string;
-  status: 'open' | 'fulfilled' | 'cancelled';
+  requestedTo?: string; // specific donor uid
+  status: 'open' | 'pending' | 'accepted' | 'rejected' | 'fulfilled' | 'cancelled';
   createdAt: number;
 };
 
@@ -39,6 +40,16 @@ export type Comment = {
   uid: string;
   text: string;
   createdAt: number;
+};
+
+export type MoneyDonation = {
+  id: string;
+  uid: string; // donor
+  amount: number;
+  currency: string;
+  purpose?: string;
+  createdAt: number;
+  receiptUrl?: string;
 };
 
 

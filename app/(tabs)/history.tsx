@@ -8,7 +8,7 @@ type HistoryItem = {
   date: number;
   patient?: string;
   hospital?: string;
-  status: 'Donated' | 'Pending';
+  status: 'Donated' | 'Pending' | 'Accepted' | 'Rejected' | 'Cancelled' | 'Open';
 };
 
 export default function HistoryScreen() {
@@ -21,8 +21,18 @@ export default function HistoryScreen() {
         listMyRequests(),
       ]);
       const items: HistoryItem[] = [
-        ...donations.map((d) => ({ id: `d_${d.id}`, date: d.date, status: d.status === 'donated' ? 'Donated' : 'Pending' })),
-        ...myRequests.map((r) => ({ id: `r_${r.id}`, date: r.createdAt, patient: r.patientName, hospital: r.hospital, status: 'Pending' })),
+        ...donations.map((d) => ({
+          id: `d_${d.id}`,
+          date: d.date,
+          status: (d.status === 'donated' ? 'Donated' : 'Pending') as HistoryItem['status'],
+        })),
+        ...myRequests.map((r) => ({
+          id: `r_${r.id}`,
+          date: r.createdAt,
+          patient: r.patientName,
+          hospital: r.hospital,
+          status: ((r.status === 'open' && 'Open') || (r.status === 'cancelled' && 'Cancelled') || (r.status === 'fulfilled' && 'Donated') || 'Pending') as HistoryItem['status'],
+        })),
       ].sort((a, b) => b.date - a.date);
       setHistory(items);
     })();

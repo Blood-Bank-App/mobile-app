@@ -16,17 +16,21 @@ export default function DonorsScreen() {
 
   useEffect(() => {
     (async () => {
-      const profiles = await listAvailableDonors();
-      setDonors(
-        profiles.map((p) => ({
-          id: p.uid,
-          name: p.name,
-          bloodGroup: p.bloodGroup ?? '-',
-          city: p.city ?? '-',
-          gender: p.gender,
-          available: p.available,
-        }))
-      );
+      try {
+        const profiles = await listAvailableDonors();
+        setDonors(
+          profiles.map((p) => ({
+            id: p.uid,
+            name: p.name || '(No Name)',
+            bloodGroup: p.bloodGroup ?? '-',
+            city: p.city ?? '-',
+            gender: p.gender,
+            available: p.available,
+          }))
+        );
+      } catch (e) {
+        setDonors([]);
+      }
     })();
   }, []);
 
@@ -46,7 +50,7 @@ export default function DonorsScreen() {
             </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No donors yet.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>No donors found. Try seeding or updating your profile to Available.</Text>}
       />
     </View>
   );

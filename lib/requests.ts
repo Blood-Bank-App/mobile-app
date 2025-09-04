@@ -2,6 +2,13 @@ import { auth, database } from '@/database/firebase';
 import { get, push, ref, set } from 'firebase/database';
 import { BloodRequest } from './types';
 
+function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  const cleaned = Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== undefined)
+  ) as T;
+  return cleaned;
+}
+
 export async function postRequest(payload: Omit<BloodRequest, 'id' | 'status' | 'createdAt' | 'createdBy'>): Promise<string> {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('Not authenticated');
@@ -20,7 +27,7 @@ export async function postRequest(payload: Omit<BloodRequest, 'id' | 'status' | 
     neededBy: payload.neededBy,
     notes: payload.notes,
   };
-  await set(ref(database, `requests/${id}`), data);
+  await set(ref(database, `requests/${id}`), stripUndefined(data));
   return id;
 }
 

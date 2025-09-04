@@ -1,10 +1,12 @@
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: 32 }]}> 
+      <Image source={require('@/assets/images/icon.png')} style={{ width: 96, height: 96, alignSelf: 'center', marginBottom: 12 }} />
       <Text style={styles.title}>Blood Donation</Text>
       <Text style={styles.subtitle}>Search donors, post requests, save lives.</Text>
       <View style={styles.actions}>
