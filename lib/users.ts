@@ -29,6 +29,8 @@ export async function saveUserProfile(partial: Partial<UserProfile>): Promise<vo
     cnic: partial.cnic ?? current.cnic,
     phone: partial.phone ?? current.phone,
     available: partial.available ?? (current.available ?? true),
+    mode: partial.mode ?? current.mode ?? 'patient',
+    themePreference: partial.themePreference ?? current.themePreference,
     createdAt: (current.createdAt as number) ?? now,
     updatedAt: now,
   };
@@ -53,6 +55,26 @@ export async function listAvailableDonors(): Promise<UserProfile[]> {
   const all = Object.values(snap.val() as Record<string, UserProfile | undefined>)
     .filter(Boolean) as UserProfile[];
   return all.filter((u) => (u as any)?.available === true || (u as any)?.available === 'true');
+}
+
+
+export async function listAllUsers(): Promise<UserProfile[]> {
+  const snap = await get(ref(database, 'users'));
+  if (!snap.exists()) return [];
+  const all = Object.values(snap.val() as Record<string, UserProfile | undefined>)
+    .filter(Boolean) as UserProfile[];
+  return all;
+}
+
+export async function setAvailability(available: boolean): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('Not authenticated');
+  const key = pathSafeKey(uid);
+  const now = Date.now();
+  await update(ref(database), {
+    [`users/${key}/available`]: available,
+    [`users/${key}/updatedAt`]: now,
+  });
 }
 
 

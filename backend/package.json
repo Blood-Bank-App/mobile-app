@@ -1,0 +1,27 @@
+{
+  "name": "bloodbank-backend",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers backend for Blood Bank App - Stripe integration",
+  "main": "src/worker.ts",
+  "scripts": {
+    "build": "wrangler deploy",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "dev": "wrangler dev",
+    "dev:local": "wrangler dev --local"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "stripe": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0"
+  },
+  "keywords": ["stripe", "firebase", "blood-bank", "payments", "cloudflare-workers"],
+  "author": "Blood Bank Team",
+  "license": "MIT"
+}

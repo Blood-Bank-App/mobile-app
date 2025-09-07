@@ -1,0 +1,9 @@
+name = "bloodbank-backend"
+main = "src/worker.ts"
+compatibility_date = "2023-12-01"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }

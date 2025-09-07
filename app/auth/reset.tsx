@@ -1,4 +1,6 @@
+import { Colors } from '@/constants/Colors';
 import { auth } from '@/database/firebase';
+import { useColorScheme } from '@/hooks/useColorScheme';
 import { Image } from 'expo-image';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import React, { useState } from 'react';
@@ -6,6 +8,7 @@ import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 
 export default function ResetScreen() {
   const [email, setEmail] = useState('');
+  const colorScheme = useColorScheme() ?? 'light';
 
   const reset = async () => {
     try {
@@ -17,12 +20,23 @@ export default function ResetScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
       <Image source={require('@/assets/images/logo.jpg')} style={{ width: 96, height: 96, borderRadius: 16, alignSelf: 'center', marginBottom: 12 }} />
-      <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: '700', marginBottom: 12 }}>Blood Donation App</Text>
-      <View style={styles.card}>
-        <Text style={styles.title}>Reset Password</Text>
-        <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" />
+      <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: '700', marginBottom: 12, color: Colors[colorScheme].text }}>Blood Donation App</Text>
+      <View style={[styles.card, { backgroundColor: Colors[colorScheme].cardBackground, borderColor: Colors[colorScheme].border }]}>
+        <Text style={[styles.title, { color: Colors[colorScheme].text }]}>Reset Password</Text>
+        <TextInput 
+          placeholder="Email" 
+          placeholderTextColor={Colors[colorScheme].secondaryText}
+          value={email} 
+          onChangeText={setEmail} 
+          style={[styles.input, { 
+            color: Colors[colorScheme].text, 
+            backgroundColor: Colors[colorScheme].inputBackground, 
+            borderColor: Colors[colorScheme].border 
+          }]} 
+          autoCapitalize="none" 
+        />
         <TouchableOpacity style={styles.primaryButton} onPress={reset}>
           <Text style={styles.primaryText}>Send Reset Email</Text>
         </TouchableOpacity>

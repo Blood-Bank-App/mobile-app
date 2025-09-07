@@ -8,6 +8,8 @@ export type UserProfile = {
   cnic?: string;
   phone?: string;
   available?: boolean;
+  mode?: 'donor' | 'patient';
+  themePreference?: 'system' | 'light' | 'dark';
   createdAt: number;
   updatedAt: number;
 };
@@ -20,6 +22,9 @@ export type BloodRequest = {
   city: string;
   gender?: string;
   hospital?: string;
+  locationAddress?: string;
+  locationLat?: number;
+  locationLng?: number;
   unitsRequired?: number;
   neededBy?: number;
   notes?: string;
@@ -50,6 +55,38 @@ export type MoneyDonation = {
   purpose?: string;
   createdAt: number;
   receiptUrl?: string;
+  stripePaymentId?: string;
+  stripeSessionId?: string;
+};
+
+export type Organization = {
+  id: string;
+  name: string;
+  type: 'hospital' | 'ngo';
+  city: string;
+  address?: string;
+  locationLat?: number;
+  locationLng?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logoUrl?: string;
+  verified: boolean;
+  createdAt: number;
+  updatedAt: number;
+  createdBy: string;
+};
+
+export type OrgSubscription = {
+  orgId: string;
+  plan: 'basic' | 'premium';
+  status: 'active' | 'cancelled' | 'past_due';
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+  currentPeriodStart: number;
+  currentPeriodEnd: number;
+  createdAt: number;
+  updatedAt: number;
 };
 
 
