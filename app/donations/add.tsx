@@ -1,7 +1,7 @@
 import { STRIPE_PRODUCTS, formatCurrency } from '@/config/stripe';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { createStripePaymentSession } from '@/lib/donations';
+import { createStripePaymentIntent } from '@/lib/donations';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -36,7 +36,7 @@ export default function AddMoneyDonationScreen() {
       setLoading(true);
       
       // Create Stripe checkout session
-      const sessionUrl = await createStripePaymentSession({
+      const sessionUrl = await createStripePaymentIntent({
         amount: amountNum,
         currency: 'PKR',
         purpose: purpose.trim() || undefined,

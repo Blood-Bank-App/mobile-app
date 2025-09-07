@@ -13,7 +13,7 @@ export const STRIPE_CONFIG = {
   // Backend URL for server-side operations
   backendUrl: Constants.expoConfig?.extra?.backendUrl || 
               process.env.EXPO_PUBLIC_BACKEND_URL || 
-              'https://bloodbank-backend.herokuapp.com',
+              'http://localhost:3000',
   
   // API Version
   apiVersion: '2023-10-16' as const,

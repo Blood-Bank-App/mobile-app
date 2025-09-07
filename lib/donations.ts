@@ -68,14 +68,11 @@ export async function createStripePaymentIntent({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await user.getIdToken()}`,
       },
       body: JSON.stringify({
         amount: amountInCents,
         currency: currency.toLowerCase(),
         purpose,
-        userId: user.uid,
-        userEmail: user.email,
       }),
     });
 

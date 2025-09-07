@@ -60,6 +60,7 @@ misplace
   - Use auth layout. Logo top-center.
   - Inputs: Email, Password. Links: Create account, Forgot password.
   - If onboarding incomplete: redirect to Onboarding.
+  - disable button and show loader while signing..
 - Reset Password
   - Use auth layout. Input: Email. Button: Send Reset Email.
 - Onboarding Profile (after signup/login)

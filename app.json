@@ -39,8 +39,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "stripePublishableKey": "pk_test_your_stripe_publishable_key_here",
-      "backendUrl": "https://bloodbank-backend.herokuapp.com"
+      "stripePublishableKey": "pk_test_51RyataPGd9QijKjn1JQ1iGVOYE09NW9zK0IkTp9MXYvI5ofuudKRTAbZOOpOWiQh2K0V8ESXYZgaaKUkgPoPYm0K00vuWJ1t1Q",
+      "backendUrl": "https://bloodbank-backend.farjad8585.workers.dev"
     }
   }
 }
