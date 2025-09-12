@@ -66,6 +66,11 @@ function RootLayoutInner() {
         headerTintColor: Colors[theme].text,
       }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="request/[id]" options={{ title: 'Request Details' }} />
+        <Stack.Screen name="profile/[uid]" options={{ title: 'User Profile' }} />
+        <Stack.Screen name="donations" options={{ title: 'Donation History' }} />
+        <Stack.Screen name="donations/add" options={{ title: 'Add Donation' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />

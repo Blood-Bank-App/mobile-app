@@ -4,9 +4,56 @@ import { useThemeCustom } from '@/context/ThemeContext';
 import { auth } from '@/database/firebase';
 import { setAvailability } from '@/lib/users';
 import { Ionicons } from '@expo/vector-icons';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import { Redirect, Tabs } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Dimensions, Image, Platform, Switch, Text, TouchableOpacity, View } from 'react-native';
+
+// CustomTabBar component for mode-based filtering
+type CustomTabBarProps = BottomTabBarProps & {
+	mode: "donor" | "patient" | string;
+};
+
+function CustomTabBar({ state, descriptors, navigation, mode, ...rest }: CustomTabBarProps) {
+	// which route names should be visible for each mode
+	const visibleNames = useMemo(() => {
+		if (mode === "donor") {
+			return new Set(["home", "inbox", "donate", "history", "profile"]);
+		}
+		// patient (or default)
+		return new Set(["home", "donors", "request", "donate", "history", "profile"]);
+	}, [mode]);
+
+	// filter routes + descriptors
+	const filteredRoutes = state.routes.filter((r) => visibleNames.has(r.name));
+	const filteredDescriptors = filteredRoutes.reduce<Record<string, any>>((acc, r) => {
+		acc[r.key] = descriptors[r.key];
+		return acc;
+	}, {});
+
+	// find index of currently active route inside filteredRoutes
+	const currentRouteKey = state.routes[state.index]?.key;
+	const filteredIndex = filteredRoutes.findIndex((r) => r.key === currentRouteKey);
+
+	// if current active route is hidden, navigate to the first visible route
+	useEffect(() => {
+		if (filteredIndex === -1 && filteredRoutes.length > 0) {
+			// navigate to first allowed route name
+			navigation.navigate(filteredRoutes[0].name);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filteredIndex, filteredRoutes.length]);
+
+	// create a safe filtered state for BottomTabBar to render
+	const safeState = {
+		...state,
+		routes: filteredRoutes,
+		index: Math.max(0, filteredIndex === -1 ? 0 : filteredIndex),
+	};
+
+	return <BottomTabBar {...rest} state={safeState} descriptors={filteredDescriptors} navigation={navigation} />;
+}
 
 export default function TabLayout() {
 	const { theme } = useThemeCustom();
@@ -108,7 +155,7 @@ export default function TabLayout() {
 	if (!isLoggedIn) {
 		return <Redirect href="/auth/login" />;
 	}
-
+	
 	return (
 		<Tabs
 			key={`tabs-${mode}`} // Force re-render when mode changes
@@ -138,7 +185,11 @@ export default function TabLayout() {
 					ios: { position: 'absolute' },
 					default: {},
 				}),
-			}}>
+			}}
+			// pass mode to custom tab bar
+			tabBar={(props) => <CustomTabBar {...props} mode={mode} />}
+		>
+			{/* declare ALL screens (keep them all so router sees them) */}
 			<Tabs.Screen
 				name="home"
 				options={{
@@ -147,47 +198,36 @@ export default function TabLayout() {
 					tabBarLabel: 'Home',
 				}}
 			/>
-			{/* Patient mode tabs */}
-			{mode === 'patient' && (
-				<>
-					<Tabs.Screen
-						name="donors"
-						options={{
-							href: null,
-							title: 'Find Donors',
-							tabBarIcon: ({ color, size }) => (
-								<Ionicons name="people" size={size ?? 24} color={color} />
-							),
-							tabBarLabel: 'Donors',
-						}}
-					/>
-					<Tabs.Screen
-						name="request"
-						options={{
-							href: null,
-							title: 'Request Blood',
-							tabBarIcon: ({ color, size }) => (
-								<Ionicons name="add-circle" size={size ?? 24} color={color} />
-							),
-							tabBarLabel: 'Request',
-						}}
-					/>
-				</>
-			)}
-			{/* Donor mode tabs */}
-			{mode === 'donor' && (
-				<Tabs.Screen
-					name="inbox"
-					options={{
-						href: null,
-						title: 'Donor Inbox',
-						tabBarIcon: ({ color, size }) => (
-							<Ionicons name="mail" size={size ?? 24} color={color} />
-						),
-						tabBarLabel: 'Inbox',
-					}}
-				/>
-			)}
+			<Tabs.Screen
+				name="inbox"
+				options={{
+					title: 'Donor Inbox',
+					tabBarIcon: ({ color, size }) => (
+						<Ionicons name="mail" size={size ?? 24} color={color} />
+					),
+					tabBarLabel: 'Inbox',
+				}}
+			/>
+			<Tabs.Screen
+				name="donors"
+				options={{
+					title: 'Find Donors',
+					tabBarIcon: ({ color, size }) => (
+						<Ionicons name="people" size={size ?? 24} color={color} />
+					),
+					tabBarLabel: 'Donors',
+				}}
+			/>
+			<Tabs.Screen
+				name="request"
+				options={{
+					title: 'Request Blood',
+					tabBarIcon: ({ color, size }) => (
+						<Ionicons name="add-circle" size={size ?? 24} color={color} />
+					),
+					tabBarLabel: 'Request',
+				}}
+			/>
 			<Tabs.Screen
 				name="donate"
 				options={{

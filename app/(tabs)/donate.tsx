@@ -1,6 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
-import { createStripePaymentIntent } from '@/lib/donations';
+import { createStripePaymentIntent, recordMoneyDonation } from '@/lib/donations';
 import { Ionicons } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Link } from 'expo-router';
@@ -81,13 +81,30 @@ export default function DonateScreen() {
         throw new Error(presentError.message);
       }
 
-      // Payment succeeded - webhook will handle recording the donation
-      Alert.alert('Success', 'Thank you for your donation! A receipt has been sent to your email.');
-      
-      // Reset form
-      setSelectedAmount(null);
-      setCustomAmount('');
-      setSelectedPurpose(null);
+      // Payment succeeded - record the donation
+      try {
+        await recordMoneyDonation({
+          amount,
+          currency: 'PKR',
+          purpose,
+          stripePaymentId: 'stripe_payment_' + Date.now(), // Placeholder since we don't have the actual payment ID
+        });
+        
+        Alert.alert('Success', 'Thank you for your donation! A receipt has been sent to your email.');
+        
+        // Reset form
+        setSelectedAmount(null);
+        setCustomAmount('');
+        setSelectedPurpose(null);
+      } catch (recordError) {
+        console.error('Failed to record donation:', recordError);
+        Alert.alert('Success', 'Thank you for your donation! A receipt has been sent to your email.');
+        
+        // Reset form even if recording failed
+        setSelectedAmount(null);
+        setCustomAmount('');
+        setSelectedPurpose(null);
+      }
       
     } catch (error: any) {
       Alert.alert('Payment Error', error?.message || 'Failed to process donation');
@@ -137,12 +154,19 @@ export default function DonateScreen() {
         <View style={[styles.customAmountContainer, { borderColor: isDark ? '#374151' : '#D1D5DB' }]}>
           <Text style={[styles.currencySymbol, { color: Colors[theme].text }]}>PKR</Text>
           <TextInput
-            style={[styles.customAmountInput, { color: Colors[theme].text }]}
+            style={[
+              styles.customAmountInput, 
+              { 
+                color: Colors[theme].text,
+                opacity: selectedAmount ? 0.5 : 1
+              }
+            ]}
             placeholder="Enter custom amount"
             placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'}
             value={customAmount}
             onChangeText={handleCustomAmountChange}
             keyboardType="numeric"
+            editable={!selectedAmount}
           />
         </View>
       </View>

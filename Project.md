@@ -16,6 +16,7 @@ This document is the canonical reference for product behavior, data flow, and im
 #### Navigation (expo-router)
 - Auth stack: `/auth/login`, `/auth/signup`, `/auth/reset`, `/auth/onboarding`.
 - Tabs: `/(tabs)/home`, `/(tabs)/donors` (Patient only), `/(tabs)/request` (Patient only), `/(tabs)/donate`, `/(tabs)/history`, `/(tabs)/profile`, `/(tabs)/inbox` (Donor only).
+    -In expo {tabs} navigation showing by detail with file name. we can overcome this with _layout.tsx file but there could be an issue when we showing menu conditionally it will with default routing.
 - Details: `/request`, `/request/[id]`, `/profile/[uid]`, `/donations`, `/donations/add`, `/+not-found`.
 - Auth Guard: tabs require authentication; logged-out users redirect to `/auth/login`.
 misplace
@@ -92,7 +93,7 @@ misplace
   - If no `requested_to`: create general request; status `open` for donors to accept.
   - Inputs: Patient Name (default: current user's name), Required Blood Group (default: user's group), City (default: user's city), Gender (default: user's gender), Hospital/Location (text or map), Quantity (units), request_to (optional), Notes (optional).
   - Button: Post Request.
-  - Location Picker: offer map picker and "Use current location"; persist `locationAddress`, `locationLat`, `locationLng` when available. Request location access only when user opts in; handle denial gracefully.
+  - Location Picker: offer map picker and "Use current location for hospital"; persist `locationAddress`, `locationLat`, `locationLng` when available. Request location access only when user opts in; handle denial gracefully.
 - Donor Inbox (visible in Donor mode)
   - Tabs: Request To Me (targeted/pending), All Requests (discoverable open requests).
   - Actions: Accept, Reject, View Patient Profile.

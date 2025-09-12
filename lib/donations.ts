@@ -107,9 +107,9 @@ export async function recordMoneyDonation(data: Omit<MoneyDonation, 'id' | 'crea
     currency: data.currency ?? 'PKR',
     purpose: data.purpose,
     createdAt: Date.now(),
-    receiptUrl: data.receiptUrl,
-    stripePaymentId: data.stripePaymentId,
-    stripeSessionId: data.stripeSessionId,
+    ...(data.receiptUrl && { receiptUrl: data.receiptUrl }),
+    ...(data.stripePaymentId && { stripePaymentId: data.stripePaymentId }),
+    ...(data.stripeSessionId && { stripeSessionId: data.stripeSessionId }),
   };
   await set(ref(database, `money_donations/${uid}/${id}`), payload);
   return id;

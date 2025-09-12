@@ -7,7 +7,7 @@ import { saveUserProfile } from '@/lib/users';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -50,7 +50,11 @@ export default function OnboardingScreen() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: Colors[colorScheme].background }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <Image source={require('@/assets/images/logo.jpg')} style={{ width: 96, height: 96, borderRadius: 16, alignSelf: 'center', marginBottom: 12 }} />
       <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: '700', marginBottom: 12, color: Colors[colorScheme].text }}>Blood Donation App</Text>
       <View style={[styles.card, { backgroundColor: Colors[colorScheme].cardBackground, borderColor: Colors[colorScheme].border }]}>
@@ -153,12 +157,13 @@ export default function OnboardingScreen() {
       <SelectModal visible={openPicker==='gender'} title="Select Gender" options={GENDERS} onClose={()=>setOpenPicker(null)} onSelect={(v)=>{setGender(v); setOpenPicker(null);}} />
       <SelectModal visible={openPicker==='blood'} title="Select Blood Group" options={BLOOD_GROUPS} onClose={()=>setOpenPicker(null)} onSelect={(v)=>{setBloodGroup(v); setOpenPicker(null);}} />
       <SelectModal visible={openPicker==='city'} title="Select City" options={CITIES_PK} onClose={()=>setOpenPicker(null)} onSelect={(v)=>{setCity(v); setOpenPicker(null);}} />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, gap: 10, justifyContent: 'center' },
+  container: { flex: 1, padding: 16, gap: 10 },
+  scrollContent: { paddingBottom: 20, flexGrow: 1, justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 4, textAlign: 'center' },
   input: {
     borderWidth: 1,

@@ -6,7 +6,7 @@ import { postRequest } from '@/lib/requests';
 import { getUserProfile } from '@/lib/users';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function RequestBloodScreen() {
 	const { theme } = useThemeCustom();
@@ -19,11 +19,7 @@ export default function RequestBloodScreen() {
 	const [hospital, setHospital] = useState('');
 	const [units, setUnits] = useState('');
 	const [notes, setNotes] = useState('');
-	const [locationAddress, setLocationAddress] = useState('');
-	const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-	const [neededBy, setNeededBy] = useState('');
 	const [openPicker, setOpenPicker] = useState<null | 'gender' | 'city' | 'blood'>(null);
-	const [requestingLocation, setRequestingLocation] = useState(false);
 	const requestedTo = typeof params.requestedTo === 'string' ? params.requestedTo : undefined;
 
 	useEffect(() => {
@@ -38,30 +34,6 @@ export default function RequestBloodScreen() {
 		})();
 	}, []);
 
-	const onUseCurrentLocation = async () => {
-		try {
-			setRequestingLocation(true);
-			const Location = await import('expo-location');
-			const { status } = await Location.requestForegroundPermissionsAsync();
-			if (status !== 'granted') {
-				Alert.alert('Permission denied', 'Location permission is required to use current location.');
-				return;
-			}
-			const pos = await Location.getCurrentPositionAsync({});
-			setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-			// Reverse geocode best-effort
-			const places = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-			if (places && places.length > 0) {
-				const p = places[0];
-				const addr = [p.name, p.street, p.city, p.region].filter(Boolean).join(', ');
-				setLocationAddress(addr);
-			}
-		} catch (e) {
-			Alert.alert('Location error', 'Unable to fetch current location.');
-		} finally {
-			setRequestingLocation(false);
-		}
-	};
 
 	const onSubmit = async () => {
 		if (!patientName || !bloodGroup || !city) {
@@ -76,11 +48,7 @@ export default function RequestBloodScreen() {
 				gender,
 				hospital,
 				unitsRequired: units ? Number(units) : undefined,
-				neededBy: neededBy ? Number(neededBy) : undefined,
 				notes,
-				locationAddress: locationAddress || undefined,
-				locationLat: coords?.lat,
-				locationLng: coords?.lng,
 				requestedTo,
 			});
 			Alert.alert('Posted', 'Your request has been posted.');
@@ -90,17 +58,19 @@ export default function RequestBloodScreen() {
 			setGender('');
 			setHospital('');
 			setUnits('');
-			setNeededBy('');
 			setNotes('');
-			setLocationAddress('');
-			setCoords(null);
 		} catch (e: any) {
 			Alert.alert('Post failed', e?.message ?? 'Could not post request. Are you logged in?');
 		}
 	};
 
 	return (
-		<View style={[styles.container, { backgroundColor: Colors[theme].background }] }>
+		<ScrollView 
+			style={[styles.scrollContainer, { backgroundColor: Colors[theme].background }]}
+			contentContainerStyle={styles.scrollContent}
+			showsVerticalScrollIndicator={false}
+			keyboardShouldPersistTaps="handled"
+		>
 			<Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>Request Blood</Text>
 			<TextInput placeholder="Patient Name" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={patientName} onChangeText={setPatientName} />
 			<TouchableOpacity style={[styles.input, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} onPress={() => setOpenPicker('blood')}>
@@ -113,17 +83,7 @@ export default function RequestBloodScreen() {
 				<Text style={{ color: isDark ? (gender ? '#fff' : '#9CA3AF') : '#111827' }}>{gender || 'Gender'}</Text>
 			</TouchableOpacity>
 			<TextInput placeholder="Hospital/Location" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={hospital} onChangeText={setHospital} />
-			<TextInput placeholder="Location Address (optional)" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={locationAddress} onChangeText={setLocationAddress} />
-			<View style={{ flexDirection: 'row', gap: 8 }}>
-				<TouchableOpacity style={[styles.smallButton, { backgroundColor: '#111827' }]} onPress={() => Alert.alert('Map picker', 'Map picker not implemented in this demo.')}>
-					<Text style={{ color: '#fff', fontWeight: '600' }}>Pick on Map</Text>
-				</TouchableOpacity>
-				<TouchableOpacity style={[styles.smallButton, { backgroundColor: requestingLocation ? '#6B7280' : '#374151' }]} onPress={onUseCurrentLocation} disabled={requestingLocation}>
-					<Text style={{ color: '#fff', fontWeight: '600' }}>{requestingLocation ? 'Locating...' : 'Use current location'}</Text>
-				</TouchableOpacity>
-			</View>
 			<TextInput placeholder="Quantity (units)" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} keyboardType="number-pad" style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={units} onChangeText={setUnits} />
-			<TextInput placeholder="Needed By (timestamp ms, optional)" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} keyboardType="number-pad" style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={neededBy} onChangeText={setNeededBy} />
 			<TextInput placeholder="Additional Notes" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, styles.textarea, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={notes} onChangeText={setNotes} multiline />
 			{requestedTo ? (
 				<View style={{ marginTop: 4 }}>
@@ -155,12 +115,18 @@ export default function RequestBloodScreen() {
 				onClose={() => setOpenPicker(null)}
 				onSelect={(v) => { setBloodGroup(v); setOpenPicker(null); }}
 			/>
-		</View>
+		</ScrollView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, padding: 16, gap: 10 },
+	scrollContainer: { flex: 1 },
+	scrollContent: { 
+		padding: 16, 
+		paddingBottom: 40, 
+		gap: 10,
+		flexGrow: 1 
+	},
 	title: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
 	input: {
 		borderWidth: 1,
@@ -168,16 +134,16 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		padding: 12,
 	},
-	textarea: { height: 100, textAlignVertical: 'top' },
+	textarea: { minHeight: 100, textAlignVertical: 'top' },
 	primaryButton: {
-		marginTop: 8,
+		marginTop: 16,
+		marginBottom: 8,
 		backgroundColor: '#E11D48',
 		paddingVertical: 14,
 		borderRadius: 12,
 		alignItems: 'center',
 	},
 	primaryText: { color: '#fff', fontWeight: '600' },
-	smallButton: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });
 
 

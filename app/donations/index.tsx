@@ -140,14 +140,16 @@ export default function DonationsScreen() {
         </View>
       )}
 
-      <View style={styles.actionBar}>
-        <Link href="/(tabs)/donate" asChild>
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add" size={20} color="#fff" />
-            <Text style={styles.addButtonText}>Make New Donation</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+      {donations.length > 0 && (
+        <View style={styles.actionBar}>
+          <Link href="/(tabs)/donate" asChild>
+            <TouchableOpacity style={styles.addButton}>
+              <Ionicons name="add" size={20} color="#fff" />
+              <Text style={styles.addButtonText}>Make New Donation</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.centered}>
