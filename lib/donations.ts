@@ -3,20 +3,6 @@ import { auth, database } from '@/database/firebase';
 import { get, push, ref, set } from 'firebase/database';
 import { Donation, MoneyDonation } from './types';
 
-export async function recordDonationIntent(requestId: string): Promise<string> {
-  const uid = auth.currentUser?.uid;
-  if (!uid) throw new Error('Not authenticated');
-  const id = push(ref(database, `donations/${uid}`)).key!;
-  const data: Donation = {
-    id,
-    requestId,
-    status: 'pending',
-    date: Date.now(),
-  };
-  await set(ref(database, `donations/${uid}/${id}`), data);
-  return id;
-}
-
 export async function createDonationRecord(requestId: string, donorUid: string): Promise<string> {
   const id = push(ref(database, `donations/${donorUid}`)).key!;
   const data: Donation = {

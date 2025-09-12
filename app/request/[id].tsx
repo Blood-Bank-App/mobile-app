@@ -2,7 +2,6 @@ import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { auth } from '@/database/firebase';
 import { addComment, deleteComment, listComments } from '@/lib/comments';
-import { recordDonationIntent } from '@/lib/donations';
 import { acceptRequest, cancelRequest, getRequestById, markFulfilled, rejectRequest } from '@/lib/requests';
 import { BloodRequest, Comment } from '@/lib/types';
 import { getUserProfile } from '@/lib/users';
@@ -131,16 +130,6 @@ export default function RequestDetailScreen() {
       Alert.alert('Error', e?.message ?? 'Failed to mark as fulfilled');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const onRecordDonation = async () => {
-    if (!id) return;
-    try {
-      await recordDonationIntent(id);
-      Alert.alert('Recorded', 'Donation intent recorded.');
-    } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Failed to record donation');
     }
   };
 
@@ -273,12 +262,6 @@ export default function RequestDetailScreen() {
             <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#8B5CF6' }]} onPress={onMarkFulfilled} disabled={loading}>
               <Ionicons name="checkmark-done" size={16} color="#fff" />
               <Text style={styles.actionText}>Mark Fulfilled</Text>
-            </TouchableOpacity>
-          )}
-          {!isCreator && (
-            <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#3B82F6' }]} onPress={onRecordDonation}>
-              <Ionicons name="medical" size={16} color="#fff" />
-              <Text style={styles.actionText}>Record Donation</Text>
             </TouchableOpacity>
           )}
         </View>
