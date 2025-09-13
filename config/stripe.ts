@@ -1,3 +1,16 @@
+import Constants from 'expo-constants';
+
+export function getStripePublishableKey(): string {
+  const key = (Constants.expoConfig?.extra as any)?.stripe?.publishableKey as string | undefined;
+  if (!key) throw new Error('Stripe publishable key missing in app config');
+  return key;
+}
+
+export function getBackendBaseUrl(): string {
+  // Adjust as per deployment
+  return (Constants.expoConfig?.extra as any)?.backendBaseUrl || 'http://localhost:3001';
+}
+
 // Stripe Configuration for Blood Bank App
 // Handles payment processing for money donations and organization subscriptions
 

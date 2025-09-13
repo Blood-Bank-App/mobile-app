@@ -1,3 +1,32 @@
+import React from 'react';
+import { View, Text, Switch, Button } from 'react-native';
+import { useUserProfile } from '@/context/UserProfileContext';
+import { useAuth } from '@/context/AuthContext';
+
+export default function ProfileScreen() {
+  const { mode, setMode, profile, setAvailability } = useUserProfile();
+  const { signOut } = useAuth();
+
+  const isDonor = mode === 'donor';
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 12 }}>My Profile</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ marginRight: 6 }}>Mode: {isDonor ? 'Donor' : 'Patient'}</Text>
+        <Switch value={isDonor} onValueChange={(v) => setMode(v ? 'donor' : 'patient')} />
+      </View>
+      {isDonor && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <Text style={{ marginRight: 6 }}>Available</Text>
+          <Switch value={!!profile?.available} onValueChange={(v) => setAvailability(v)} />
+        </View>
+      )}
+      <Button title="Logout" onPress={signOut} />
+    </View>
+  );
+}
+
 import SelectModal from '@/components/SelectModal';
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';

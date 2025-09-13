@@ -1,3 +1,25 @@
+import { Stack } from 'expo-router';
+import React from 'react';
+import { AuthProvider } from '@/context/AuthContext';
+import { UserProfileProvider } from '@/context/UserProfileContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <UserProfileProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth" />
+            <Stack.Screen name="request" />
+          </Stack>
+        </UserProfileProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { useFonts } from 'expo-font';

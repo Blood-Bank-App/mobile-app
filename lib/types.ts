@@ -1,3 +1,59 @@
+export type Gender = 'Male' | 'Female' | 'Other';
+export type BloodGroup = 'A+'|'A-'|'B+'|'B-'|'O+'|'O-'|'AB+'|'AB-';
+
+export type UserProfile = {
+  uid: string;
+  name?: string;
+  email?: string;
+  gender?: Gender;
+  bloodGroup?: BloodGroup;
+  city?: string;
+  phone?: string;
+  cnic?: string;
+  available?: boolean;
+  mode?: 'donor'|'patient';
+  themePreference?: 'system'|'light'|'dark';
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+export type BloodRequestStatus = 'pending'|'open'|'accepted'|'rejected'|'fulfilled'|'cancelled';
+
+export type BloodRequest = {
+  id: string;
+  createdBy: string;
+  patientName: string;
+  requiredBloodGroup: BloodGroup;
+  city: string;
+  gender?: Gender;
+  hospital?: string;
+  locationAddress?: string;
+  locationLat?: number;
+  locationLng?: number;
+  unitsRequired?: number;
+  neededBy?: number;
+  notes?: string;
+  requestedTo?: string;
+  status: BloodRequestStatus;
+  createdAt: number;
+};
+
+export type DonationStatus = 'pending'|'completed'|'cancelled';
+
+export type Donation = {
+  id: string;
+  requestId: string;
+  status: DonationStatus;
+  date: number;
+};
+
+export type Comment = {
+  id: string;
+  uid: string;
+  text: string;
+  createdAt: number;
+};
+
 export type UserProfile = {
   uid: string;
   name: string;

@@ -1,3 +1,23 @@
+import React from 'react';
+import { View, Text, Button } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useUserProfile } from '@/context/UserProfileContext';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { mode } = useUserProfile();
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 16 }}>Dashboard</Text>
+      {mode === 'patient' ? (
+        <Button title="Request Blood" onPress={() => router.push('/(tabs)/request')} />
+      ) : (
+        <Text>Switch to Donor mode to see urgent requests here soon.</Text>
+      )}
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';

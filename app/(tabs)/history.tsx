@@ -1,3 +1,46 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList } from 'react-native';
+import { listMyRequests } from '@/lib/requests';
+import { listMyDonations } from '@/lib/donations';
+import { BloodRequest, Donation } from '@/lib/types';
+
+export default function HistoryScreen() {
+  const [requests, setRequests] = useState<BloodRequest[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      setRequests(await listMyRequests());
+      setDonations(await listMyDonations());
+    })();
+  }, []);
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 12 }}>My Requests</Text>
+      <FlatList
+        data={requests}
+        keyExtractor={(r) => r.id}
+        renderItem={({ item }) => (
+          <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+            <Text>{item.patientName} • {item.city} • {item.requiredBloodGroup} • {item.status}</Text>
+          </View>
+        )}
+      />
+      <Text style={{ fontSize: 20, fontWeight: '600', marginVertical: 12 }}>My Donations</Text>
+      <FlatList
+        data={donations}
+        keyExtractor={(d) => d.id}
+        renderItem={({ item }) => (
+          <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: '#eee' }}>
+            <Text>{item.requestId} • {item.status}</Text>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';

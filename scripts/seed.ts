@@ -1,3 +1,42 @@
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, set } from 'firebase/database';
+
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY || 'dev',
+  authDomain: 'dev.firebaseapp.com',
+  databaseURL: process.env.FIREBASE_DATABASE_URL || 'http://localhost:9000?ns=dev',
+  projectId: 'dev',
+  storageBucket: 'dev.appspot.com',
+  messagingSenderId: '0',
+  appId: 'dev'
+};
+
+async function main() {
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const now = Date.now();
+
+  const users = {
+    patient1: { uid: 'patient1', name: 'Ali Patient', city: 'Karachi', bloodGroup: 'A+', available: false, mode: 'patient', createdAt: now, updatedAt: now },
+    donor1: { uid: 'donor1', name: 'Ayesha Donor', city: 'Karachi', bloodGroup: 'O+', gender: 'Female', available: true, mode: 'donor', createdAt: now, updatedAt: now },
+    donor2: { uid: 'donor2', name: 'Hamza Donor', city: 'Lahore', bloodGroup: 'B+', gender: 'Male', available: true, mode: 'donor', createdAt: now, updatedAt: now },
+    donor3: { uid: 'donor3', name: 'Sara Donor', city: 'Islamabad', bloodGroup: 'AB-', gender: 'Female', available: false, mode: 'donor', createdAt: now, updatedAt: now }
+  };
+
+  await set(ref(db, 'users'), users);
+
+  const requests = {
+    req1: { id: 'req1', createdBy: 'patient1', patientName: 'Ali', requiredBloodGroup: 'O+', city: 'Karachi', status: 'open', createdAt: now },
+    req2: { id: 'req2', createdBy: 'patient1', patientName: 'Ali', requiredBloodGroup: 'B+', city: 'Lahore', requestedTo: 'donor2', status: 'pending', createdAt: now }
+  } as any;
+
+  await set(ref(db, 'requests'), requests);
+
+  console.log('Seed complete');
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });
+
 // Client-side seeder using Firebase Web SDK (no service account).
 // Requires a Firebase user with write permissions and permissive DB rules for that user.
 import { initializeApp } from 'firebase/app';

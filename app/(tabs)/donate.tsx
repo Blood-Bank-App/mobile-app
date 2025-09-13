@@ -1,3 +1,37 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
+import { createPaymentIntent } from '@/lib/payments';
+
+export default function DonateMoneyScreen() {
+  const [amount, setAmount] = useState('1000');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function onDonate() {
+    setLoading(true); setMessage(null);
+    try {
+      const parsed = parseInt(amount, 10);
+      if (!Number.isFinite(parsed) || parsed <= 0) throw new Error('Enter a valid amount');
+      const { clientSecret } = await createPaymentIntent({ amount: parsed, currency: 'pkr', purpose: 'Platform Support' });
+      setMessage(`Payment Intent created. clientSecret: ${clientSecret.slice(0, 10)}...`);
+    } catch (e: any) {
+      setMessage(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 12 }}>Donate Money</Text>
+      <Text>Amount (PKR)</Text>
+      <TextInput value={amount} onChangeText={setAmount} keyboardType="numeric" style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Button title={loading ? 'Processing...' : 'Donate'} onPress={onDonate} disabled={loading} />
+      {message && <Text style={{ marginTop: 12 }}>{message}</Text>}
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { createStripePaymentIntent, recordMoneyDonation } from '@/lib/donations';

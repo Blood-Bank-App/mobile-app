@@ -1,3 +1,47 @@
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance, ColorSchemeName } from 'react-native';
+
+type ThemePref = 'system' | 'light' | 'dark';
+
+type Ctx = {
+  preference: ThemePref;
+  colorScheme: ColorSchemeName;
+  setPreference: (pref: ThemePref) => Promise<void>;
+};
+
+const THEME_KEY = 'theme_pref_v1';
+
+const ThemeContext = createContext<Ctx | undefined>(undefined);
+
+export const ThemeProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [preference, setPreferenceState] = useState<ThemePref>('system');
+  const [colorScheme, setColorScheme] = useState<ColorSchemeName>(Appearance.getColorScheme());
+
+  useEffect(() => {
+    (async () => {
+      const stored = await AsyncStorage.getItem(THEME_KEY);
+      if (stored === 'system' || stored === 'light' || stored === 'dark') setPreferenceState(stored);
+    })();
+    const sub = Appearance.addChangeListener(({ colorScheme }) => setColorScheme(colorScheme));
+    return () => sub.remove();
+  }, []);
+
+  async function setPreference(pref: ThemePref) {
+    setPreferenceState(pref);
+    await AsyncStorage.setItem(THEME_KEY, pref);
+  }
+
+  const value = useMemo<Ctx>(() => ({ preference, colorScheme, setPreference }), [preference, colorScheme]);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+};
+
+export function useThemePreference() {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useThemePreference must be used within ThemeProvider');
+  return ctx;
+}
+
 import { getUserProfile, saveUserProfile } from '@/lib/users';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';

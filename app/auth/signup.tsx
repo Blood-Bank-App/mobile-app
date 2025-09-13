@@ -1,3 +1,41 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
+
+export default function SignupScreen() {
+  const { signUp } = useAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit() {
+    setLoading(true); setError(null);
+    try {
+      await signUp(email.trim(), password);
+      router.replace('/auth/onboarding');
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 12 }}>Create Account</Text>
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+      <Text>Email</Text>
+      <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Text>Password</Text>
+      <TextInput value={password} onChangeText={setPassword} secureTextEntry style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Button title={loading ? 'Creating...' : 'Sign Up'} onPress={onSubmit} disabled={loading} />
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { auth } from '@/database/firebase';

@@ -1,3 +1,30 @@
+import { db, auth } from '@/lib/firebase';
+import { ref, get, set, remove } from 'firebase/database';
+import { Comment } from '@/lib/types';
+
+function now() { return Date.now(); }
+function newId() { return Math.random().toString(36).slice(2); }
+
+export async function addComment(requestId: string, uid: string, text: string) {
+  const id = newId();
+  const payload: Comment = { id, uid, text: text.trim(), createdAt: now() };
+  if (!payload.text) throw new Error('input/invalid');
+  await set(ref(db, `comments/${requestId}/${id}`), payload);
+  return id;
+}
+
+export async function listComments(requestId: string) {
+  const snap = await get(ref(db, `comments/${requestId}`));
+  if (!snap.exists()) return [];
+  const val = snap.val() as Record<string, Comment>;
+  return Object.values(val).sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export async function deleteComment(requestId: string, commentId: string) {
+  // UI should ensure only author or request creator can delete; server rules should enforce
+  await remove(ref(db, `comments/${requestId}/${commentId}`));
+}
+
 import { auth, database } from '@/database/firebase';
 import { get, push, ref, remove, set } from 'firebase/database';
 import { Comment } from './types';

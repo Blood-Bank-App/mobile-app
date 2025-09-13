@@ -1,3 +1,26 @@
+import { db, auth } from '@/lib/firebase';
+import { ref, get, set, update } from 'firebase/database';
+import { Donation } from '@/lib/types';
+
+function now() { return Date.now(); }
+function newId() { return Math.random().toString(36).slice(2); }
+
+export async function updateDonationStatus(donationId: string, status: Donation['status']) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  await update(ref(db, `donations/${user.uid}/${donationId}`), { status });
+}
+
+export async function listMyDonations(uid?: string): Promise<Donation[]> {
+  const user = auth.currentUser;
+  const who = uid || user?.uid;
+  if (!who) throw new Error('auth/not-authenticated');
+  const snap = await get(ref(db, `donations/${who}`));
+  if (!snap.exists()) return [];
+  const val = snap.val() as Record<string, Donation>;
+  return Object.values(val);
+}
+
 import { STRIPE_CONFIG, STRIPE_PRODUCTS, getStripeErrorMessage, pkrToCents } from '@/config/stripe';
 import { auth, database } from '@/database/firebase';
 import { get, push, ref, set } from 'firebase/database';

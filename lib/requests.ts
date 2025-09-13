@@ -1,3 +1,176 @@
+import { db, auth } from '@/lib/firebase';
+import { ref, get, set, update } from 'firebase/database';
+import { BloodRequest, BloodRequestStatus } from '@/lib/types';
+
+function now() { return Date.now(); }
+function newId() { return Math.random().toString(36).slice(2); }
+
+type ListFilters = {
+  status?: BloodRequestStatus;
+  city?: string;
+  requiredBloodGroup?: BloodRequest['requiredBloodGroup'];
+  createdBy?: string;
+  requestedTo?: string;
+  mineOnly?: boolean;
+  toMeOnly?: boolean;
+  openOnly?: boolean;
+};
+
+type ListOptions = { limit?: number };
+
+export async function postRequest(input: Omit<BloodRequest, 'id'|'createdBy'|'status'|'createdAt'> & { requestedTo?: string }) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const id = newId();
+  const status: BloodRequestStatus = input.requestedTo ? 'pending' : 'open';
+  const payload: BloodRequest = {
+    id,
+    createdBy: user.uid,
+    patientName: input.patientName,
+    requiredBloodGroup: input.requiredBloodGroup,
+    city: input.city,
+    gender: input.gender,
+    hospital: input.hospital,
+    locationAddress: input.locationAddress,
+    locationLat: input.locationLat,
+    locationLng: input.locationLng,
+    unitsRequired: input.unitsRequired,
+    neededBy: input.neededBy,
+    notes: input.notes,
+    requestedTo: input.requestedTo,
+    status,
+    createdAt: now()
+  };
+  await set(ref(db, `requests/${id}`), payload);
+  return id;
+}
+
+export async function getRequestById(id: string): Promise<BloodRequest | null> {
+  const snap = await get(ref(db, `requests/${id}`));
+  return snap.exists() ? (snap.val() as BloodRequest) : null;
+}
+
+export async function listMyRequests(uid?: string) {
+  const user = auth.currentUser;
+  const who = uid || user?.uid;
+  if (!who) throw new Error('auth/not-authenticated');
+  const snap = await get(ref(db, 'requests'));
+  if (!snap.exists()) return [];
+  const all = Object.values(snap.val() as Record<string, BloodRequest>);
+  return all.filter((r) => r.createdBy === who);
+}
+
+export async function listRequests(filters: ListFilters = {}, options: ListOptions = {}) {
+  const user = auth.currentUser;
+  const snap = await get(ref(db, 'requests'));
+  const items: BloodRequest[] = [];
+  if (snap.exists()) {
+    const val = snap.val() as Record<string, BloodRequest>;
+    for (const key of Object.keys(val)) {
+      const r = val[key];
+      if (filters.status && r.status !== filters.status) continue;
+      if (filters.city && r.city !== filters.city) continue;
+      if (filters.requiredBloodGroup && r.requiredBloodGroup !== filters.requiredBloodGroup) continue;
+      if (filters.createdBy && r.createdBy !== filters.createdBy) continue;
+      if (filters.requestedTo && r.requestedTo !== filters.requestedTo) continue;
+      if (filters.mineOnly && user && r.createdBy !== user.uid) continue;
+      if (filters.toMeOnly && user && r.requestedTo !== user.uid) continue;
+      if (filters.openOnly && r.status !== 'open') continue;
+      items.push(r);
+    }
+  }
+  return { items: options.limit ? items.slice(0, options.limit) : items, nextCursor: undefined as string | undefined };
+}
+
+async function createDonationRecord(requestId: string, donorUid: string) {
+  const donationId = newId();
+  await set(ref(db, `donations/${donorUid}/${donationId}`), { id: donationId, requestId, status: 'pending', date: now() });
+  return donationId;
+}
+
+export async function acceptRequest(id: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const rRef = ref(db, `requests/${id}`);
+  const snap = await get(rRef);
+  if (!snap.exists()) throw new Error('data/not-found');
+  const data = snap.val() as BloodRequest;
+  if (data.status === 'open') {
+    await update(rRef, { status: 'accepted', requestedTo: user.uid });
+  } else if (data.status === 'pending' && data.requestedTo === user.uid) {
+    await update(rRef, { status: 'accepted' });
+  } else {
+    throw new Error('auth/forbidden');
+  }
+  await createDonationRecord(id, user.uid);
+}
+
+export async function rejectRequest(id: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const rRef = ref(db, `requests/${id}`);
+  const snap = await get(rRef);
+  if (!snap.exists()) throw new Error('data/not-found');
+  const data = snap.val() as BloodRequest;
+  if (data.status === 'pending' && data.requestedTo === user.uid) {
+    await update(rRef, { status: 'rejected' });
+  } else {
+    throw new Error('auth/forbidden');
+  }
+}
+
+export async function cancelRequest(id: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const rRef = ref(db, `requests/${id}`);
+  const snap = await get(rRef);
+  if (!snap.exists()) throw new Error('data/not-found');
+  const data = snap.val() as BloodRequest;
+  if (data.createdBy !== user.uid) throw new Error('auth/forbidden');
+  await update(rRef, { status: 'cancelled' });
+}
+
+export async function markFulfilled(id: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const rRef = ref(db, `requests/${id}`);
+  const snap = await get(rRef);
+  if (!snap.exists()) throw new Error('data/not-found');
+  const data = snap.val() as BloodRequest;
+  if (data.createdBy !== user.uid) throw new Error('auth/forbidden');
+  await update(rRef, { status: 'fulfilled' });
+}
+
+export async function getDonorStats(uid: string) {
+  const snap = await get(ref(db, 'requests'));
+  let received = 0, accepted = 0, rejected = 0;
+  if (snap.exists()) {
+    const all = Object.values(snap.val() as Record<string, BloodRequest>);
+    for (const r of all) {
+      if (r.requestedTo === uid) {
+        received += 1;
+        if (r.status === 'accepted') accepted += 1;
+        if (r.status === 'rejected') rejected += 1;
+      }
+    }
+  }
+  return { received, accepted, rejected };
+}
+
+export async function listDonorInbox(options: ListOptions = {}) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const snap = await get(ref(db, 'requests'));
+  const items: BloodRequest[] = [];
+  if (snap.exists()) {
+    const all = Object.values(snap.val() as Record<string, BloodRequest>);
+    for (const r of all) {
+      if ((r.status === 'pending' && r.requestedTo === user.uid) || r.status === 'open') items.push(r);
+    }
+  }
+  return { items: options.limit ? items.slice(0, options.limit) : items, nextCursor: undefined as string | undefined };
+}
+
 import { auth, database } from '@/database/firebase';
 import { get, push, query, ref, set } from 'firebase/database';
 import { BloodRequest, Donation } from './types';

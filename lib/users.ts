@@ -1,3 +1,68 @@
+import { db } from '@/lib/firebase';
+import { ref, get, update, set, query, orderByChild, equalTo, limitToFirst, startAfter, push } from 'firebase/database';
+import { UserProfile } from '@/lib/types';
+import { auth } from '@/lib/firebase';
+
+type ListOptions = { limit?: number; cursor?: string };
+type DonorFilters = { city?: string; bloodGroup?: UserProfile['bloodGroup']; gender?: UserProfile['gender']; available?: boolean };
+
+function now() { return Date.now(); }
+
+export async function saveUserProfile(partial: Partial<UserProfile>): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  const uid = user.uid;
+  const r = ref(db, `users/${uid}`);
+  const current = await get(r);
+  const payload = {
+    uid,
+    ...partial,
+    updatedAt: now(),
+    ...(current.exists() ? {} : { createdAt: now() })
+  } as UserProfile;
+  await set(r, { ...(current.exists() ? current.val() : {}), ...payload });
+}
+
+export async function getUserProfile(uid?: string): Promise<UserProfile | null> {
+  const id = uid || auth.currentUser?.uid;
+  if (!id) throw new Error('auth/not-authenticated');
+  const snap = await get(ref(db, `users/${id}`));
+  return snap.exists() ? (snap.val() as UserProfile) : null;
+}
+
+export async function listAvailableDonors(filters: DonorFilters = {}, options: ListOptions = {}) {
+  // Basic filtering client-side due to RTDB limitations without composite indexes
+  const snap = await get(ref(db, 'users'));
+  const items: UserProfile[] = [];
+  if (snap.exists()) {
+    const val = snap.val() as Record<string, UserProfile>;
+    for (const key of Object.keys(val)) {
+      const u = val[key];
+      if (filters.available !== false && u.available !== true) continue;
+      if (filters.city && u.city !== filters.city) continue;
+      if (filters.bloodGroup && u.bloodGroup !== filters.bloodGroup) continue;
+      if (filters.gender && u.gender !== filters.gender) continue;
+      items.push(u);
+    }
+  }
+  // simple limit
+  const limited = options.limit ? items.slice(0, options.limit) : items;
+  return { items: limited, nextCursor: undefined as string | undefined };
+}
+
+export async function listAllUsers(): Promise<UserProfile[]> {
+  const snap = await get(ref(db, 'users'));
+  if (!snap.exists()) return [];
+  const val = snap.val() as Record<string, UserProfile>;
+  return Object.values(val);
+}
+
+export async function setAvailability(available: boolean): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('auth/not-authenticated');
+  await update(ref(db, `users/${user.uid}`), { available, updatedAt: now() });
+}
+
 import { auth, database } from '@/database/firebase';
 import { child, get, ref, update } from 'firebase/database';
 import { UserProfile } from './types';

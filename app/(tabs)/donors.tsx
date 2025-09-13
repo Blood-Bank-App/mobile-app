@@ -1,3 +1,40 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList } from 'react-native';
+import { listAvailableDonors } from '@/lib/users';
+import { UserProfile } from '@/lib/types';
+
+export default function DonorsScreen() {
+  const [items, setItems] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { items } = await listAvailableDonors();
+      setItems(items);
+      setLoading(false);
+    })();
+  }, []);
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 12 }}>Available Donors</Text>
+      {loading ? <Text>Loading...</Text> : (
+        <FlatList
+          data={items}
+          keyExtractor={(u) => u.uid}
+          renderItem={({ item }) => (
+            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' }}>
+              <Text style={{ fontSize: 16, fontWeight: '500' }}>{item.name || 'Anonymous'}</Text>
+              <Text>{item.city} • {item.bloodGroup} • {item.gender || ''}</Text>
+            </View>
+          )}
+        />
+      )}
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { BLOOD_GROUPS, CITIES_PK } from '@/data/pk';

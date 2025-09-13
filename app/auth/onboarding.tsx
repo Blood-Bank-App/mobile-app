@@ -1,3 +1,38 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, Switch } from 'react-native';
+import { useUserProfile } from '@/context/UserProfileContext';
+import { useRouter } from 'expo-router';
+
+export default function OnboardingScreen() {
+  const { mode, setMode, setAvailability } = useUserProfile();
+  const [isDonor, setIsDonor] = useState(mode === 'donor');
+  const [available, setAvailable] = useState(false);
+  const router = useRouter();
+
+  async function onSave() {
+    await setMode(isDonor ? 'donor' : 'patient');
+    if (isDonor) await setAvailability(available);
+    router.replace('/(tabs)/home');
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 12 }}>Onboarding</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <Text style={{ marginRight: 6 }}>Donor Mode</Text>
+        <Switch value={isDonor} onValueChange={setIsDonor} />
+      </View>
+      {isDonor && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <Text style={{ marginRight: 6 }}>Available as Donor</Text>
+          <Switch value={available} onValueChange={setAvailable} />
+        </View>
+      )}
+      <Button title="Save & Continue" onPress={onSave} />
+    </View>
+  );
+}
+
 import SelectModal from '@/components/SelectModal';
 import { Colors } from '@/constants/Colors';
 import { BLOOD_GROUPS, CITIES_PK, GENDERS } from '@/data/pk';

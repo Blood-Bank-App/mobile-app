@@ -1,3 +1,38 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
+
+export default function ResetScreen() {
+  const { resetPassword } = useAuth();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit() {
+    setLoading(true); setError(null); setMessage(null);
+    try {
+      await resetPassword(email.trim());
+      setMessage('Reset email sent.');
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 24, fontWeight: '600', marginBottom: 12 }}>Reset Password</Text>
+      {message && <Text style={{ color: 'green' }}>{message}</Text>}
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+      <Text>Email</Text>
+      <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Button title={loading ? 'Sending...' : 'Send Reset Email'} onPress={onSubmit} disabled={loading} />
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { auth } from '@/database/firebase';
 import { useColorScheme } from '@/hooks/useColorScheme';

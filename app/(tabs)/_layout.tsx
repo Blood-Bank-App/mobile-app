@@ -1,3 +1,53 @@
+import React, { useMemo } from 'react';
+import { Tabs } from 'expo-router';
+import { View, Text, Switch } from 'react-native';
+import { useUserProfile } from '@/context/UserProfileContext';
+import { useAuth } from '@/context/AuthContext';
+import { Redirect } from 'expo-router';
+
+function HeaderRight() {
+  const { mode, setMode, profile, setAvailability } = useUserProfile();
+  const isDonor = mode === 'donor';
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Text style={{ marginRight: 6 }}>{mode === 'donor' ? 'Donor' : 'Patient'}</Text>
+        <Switch value={isDonor} onValueChange={(v) => setMode(v ? 'donor' : 'patient')} />
+      </View>
+      {isDonor && (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ marginRight: 6 }}>Available</Text>
+          <Switch value={!!profile?.available} onValueChange={(v) => setAvailability(v)} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+export default function TabLayout() {
+  const { user, initializing } = useAuth();
+  const { mode } = useUserProfile();
+
+  if (!initializing && !user) return <Redirect href="/auth/login" />;
+
+  const showDonors = mode === 'patient';
+  const showRequest = mode === 'patient';
+  const showInbox = mode === 'donor';
+
+  return (
+    <Tabs screenOptions={{ headerRight: () => <HeaderRight /> }}>
+      <Tabs.Screen name="home" options={{ title: 'Home' }} />
+      {showDonors ? <Tabs.Screen name="donors" options={{ title: 'Donors' }} /> : <Tabs.Screen name="donors" options={{ href: null }} />}
+      {showRequest ? <Tabs.Screen name="request" options={{ title: 'Request' }} /> : <Tabs.Screen name="request" options={{ href: null }} />}
+      <Tabs.Screen name="donate" options={{ title: 'Donate' }} />
+      <Tabs.Screen name="history" options={{ title: 'History' }} />
+      {showInbox ? <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} /> : <Tabs.Screen name="inbox" options={{ href: null }} />}
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+    </Tabs>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';

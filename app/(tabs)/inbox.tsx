@@ -1,3 +1,63 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, FlatList } from 'react-native';
+import { listDonorInbox, acceptRequest, rejectRequest } from '@/lib/requests';
+import { BloodRequest } from '@/lib/types';
+
+export default function InboxScreen() {
+  const [items, setItems] = useState<BloodRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const { items } = await listDonorInbox();
+    setItems(items);
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function onAccept(id: string) {
+    setMessage(null);
+    await acceptRequest(id);
+    setMessage('Accepted');
+    await load();
+  }
+  async function onReject(id: string) {
+    setMessage(null);
+    try {
+      await rejectRequest(id);
+      setMessage('Rejected');
+      await load();
+    } catch (e: any) {
+      setMessage(e.message);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 12 }}>Donor Inbox</Text>
+      {message && <Text style={{ marginBottom: 8 }}>{message}</Text>}
+      {loading ? <Text>Loading...</Text> : (
+        <FlatList
+          data={items}
+          keyExtractor={(r) => r.id}
+          renderItem={({ item }) => (
+            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderColor: '#eee' }}>
+              <Text style={{ fontSize: 16, fontWeight: '500' }}>{item.patientName}</Text>
+              <Text>{item.city} • {item.requiredBloodGroup} • {item.status}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                <Button title="Accept" onPress={() => onAccept(item.id)} />
+                {item.status === 'pending' && <Button title="Reject" onPress={() => onReject(item.id)} />}
+              </View>
+            </View>
+          )}
+        />
+      )}
+    </View>
+  );
+}
+
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';

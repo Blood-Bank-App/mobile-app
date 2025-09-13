@@ -1,3 +1,46 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button } from 'react-native';
+import { postRequest } from '@/lib/requests';
+
+export default function RequestScreen() {
+  const [patientName, setPatientName] = useState('');
+  const [requiredBloodGroup, setRequiredBloodGroup] = useState('O+');
+  const [city, setCity] = useState('Karachi');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function onSubmit() {
+    setLoading(true); setMessage(null);
+    try {
+      if (!patientName.trim() || !requiredBloodGroup.trim() || !city.trim()) throw new Error('Required fields missing');
+      const id = await postRequest({ patientName: patientName.trim(), requiredBloodGroup: requiredBloodGroup.trim() as any, city: city.trim(), notes: notes.trim() });
+      setMessage(`Request posted: ${id}`);
+      setPatientName(''); setNotes('');
+    } catch (e: any) {
+      setMessage(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 12 }}>Post Blood Request</Text>
+      <Text>Patient Name</Text>
+      <TextInput value={patientName} onChangeText={setPatientName} style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Text>Required Blood Group</Text>
+      <TextInput value={requiredBloodGroup} onChangeText={setRequiredBloodGroup} style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Text>City</Text>
+      <TextInput value={city} onChangeText={setCity} style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Text>Notes (optional)</Text>
+      <TextInput value={notes} onChangeText={setNotes} style={{ borderWidth: 1, padding: 8, marginBottom: 12 }} />
+      <Button title={loading ? 'Posting...' : 'Post Request'} onPress={onSubmit} disabled={loading} />
+      {message && <Text style={{ marginTop: 12 }}>{message}</Text>}
+    </View>
+  );
+}
+
 import SelectModal from '@/components/SelectModal';
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';

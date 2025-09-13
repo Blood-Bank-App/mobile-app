@@ -1,5 +1,28 @@
 {
   "name": "bloodbank-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.6.0",
+    "stripe": "^16.6.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.15.7",
+    "typescript": "5.4.5"
+  }
+}
+
+{
+  "name": "bloodbank-backend",
   "version": "1.0.0",
   "description": "Cloudflare Workers backend for Blood Bank App - Stripe integration",
   "main": "src/worker.ts",

@@ -1,5 +1,67 @@
 {
   "expo": {
+    "name": "BloodBank",
+    "slug": "bloodbank",
+    "scheme": "bloodbank",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.example.bloodbank"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "legacy"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      },
+      "firebase": {
+        "apiKey": "YOUR_API_KEY",
+        "authDomain": "YOUR_PROJECT.firebaseapp.com",
+        "databaseURL": "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+        "projectId": "YOUR_PROJECT",
+        "storageBucket": "YOUR_PROJECT.appspot.com",
+        "messagingSenderId": "000000000000",
+        "appId": "1:000000000000:web:0000000000000000"
+      },
+      "stripe": {
+        "publishableKey": "pk_test_replace_me"
+      }
+    }
+  }
+}
+
+{
+  "expo": {
     "name": "upgrade53",
     "slug": "upgrade53",
     "version": "1.0.0",
