@@ -9,7 +9,7 @@ STRIPE_SECRET_KEY = "YOUR_KEY"
 STRIPE_WEBHOOK_SECRET = "YOUR_KEY"
 FIREBASE_SERVICE_ACCOUNT = ""
 FIREBASE_DATABASE_URL = "https://your-project-id-default-rtdb.firebaseio.com/"
-ALLOWED_ORIGINS = "http://localhost:3000,https://dawn-mud-25d0.farjad8585.workers.dev"
+ALLOWED_ORIGINS = "http://localhost:3000,https://ba.workers.dev"
 
 [env.production]
 vars.ENVIRONMENT = "production"
