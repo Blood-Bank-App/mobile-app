@@ -1,0 +1,28 @@
+name = "bloodbank-backend"
+main = "src/worker.ts"
+compatibility_date = "2023-12-01"
+
+# Environment variables for all environments
+[vars]
+ENVIRONMENT = "development"
+STRIPE_SECRET_KEY = "YOUR_KEY"
+STRIPE_WEBHOOK_SECRET = "YOUR_KEY"
+FIREBASE_SERVICE_ACCOUNT = ""
+FIREBASE_DATABASE_URL = "https://your-project-id-default-rtdb.firebaseio.com/"
+ALLOWED_ORIGINS = "http://localhost:3000,https://dawn-mud-25d0.farjad8585.workers.dev"
+
+[env.production]
+vars.ENVIRONMENT = "production"
+vars.STRIPE_SECRET_KEY = "sk_live_your_production_stripe_key_here"
+vars.STRIPE_WEBHOOK_SECRET = "whsec_your_production_webhook_secret_here"
+vars.FIREBASE_SERVICE_ACCOUNT = ""
+vars.FIREBASE_DATABASE_URL = "https://your-production-project-id-default-rtdb.firebaseio.com/"
+vars.ALLOWED_ORIGINS = "https://your-production-domain.com"
+
+[env.staging]
+vars.ENVIRONMENT = "staging"
+vars.STRIPE_SECRET_KEY = "YOUR_KEY"
+vars.STRIPE_WEBHOOK_SECRET = "YOUR_KEY"
+vars.FIREBASE_SERVICE_ACCOUNT = ""
+vars.FIREBASE_DATABASE_URL = "https://your-staging-project-id-default-rtdb.firebaseio.com/"
+vars.ALLOWED_ORIGINS = "https://your-staging-domain.com"
