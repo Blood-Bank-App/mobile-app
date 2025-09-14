@@ -2,11 +2,11 @@
 // Requires a Firebase user with write permissions and permissive DB rules for that user.
 import { initializeApp } from 'firebase/app';
 import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  inMemoryPersistence,
-  setPersistence,
-  signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    getAuth,
+    inMemoryPersistence,
+    setPersistence,
+    signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { getDatabase, push, ref, remove, set, update } from 'firebase/database';
 

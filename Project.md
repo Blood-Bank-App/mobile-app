@@ -82,29 +82,274 @@ misplace
     - Cards show patient name, blood group, city, hospital, time posted
     - Action buttons: "View Details" (opens full request), "Accept" (donors only)
     - "Accept" immediately assigns donor and updates request status to accepted
+    - **Request Removal**: Accepted requests are immediately removed from urgent requests list
     - Only visible when user is in Donor mode or associated with an NGO
+    - Only shows requests marked with `urgent: true` flag
 - Donor List
   - Show users marked available as donors.
   - Filters: Blood Group (multi-select), City, Availability (active only).
+  - **"Active Only" Filter Behavior**: When enabled, shows only donors with `available: true` status; when disabled, shows all donors regardless of availability status.
   - Cards: profile image, name, blood group, city, gender; actions (Call/SMS/WhatsApp/Request).
   - "Request" opens Request Blood with `requestedTo` prefilled.
 - Request Blood
   - If `requested_to` provided: create targeted request; status `pending` until donor accepts/rejects. Notify donor (WhatsApp/push/deeplink).
   - If no `requested_to`: create general request; status `open` for donors to accept.
-  - Inputs: Patient Name (default: current user's name), Required Blood Group (default: user's group), City (default: user's city), Gender (default: user's gender), Hospital/Location (text or map), Quantity (units), request_to (optional), Notes (optional).
+  - Inputs: Patient Name (default: current user's name), Required Blood Group (default: user's group), City (default: user's city), Gender (default: user's gender), Hospital/Location (text or map), Quantity (units), request_to (optional), Notes (optional), Urgent Flag (checkbox - marks request as urgent).
   - Button: Post Request.
+  - **Request Cancellation**: Patient can cancel their own requests within 10 minutes of creation via "Cancel Request" button with confirmation dialog.
   - Location Picker: offer map picker and "Use current location for hospital"; persist `locationAddress`, `locationLat`, `locationLng` when available. Request location access only when user opts in; handle denial gracefully.
 - Donor Inbox (visible in Donor mode)
   - Tabs: Request To Me (targeted/pending), All Requests (discoverable open requests).
   - Actions: Accept, Reject, View Patient Profile.
   - Logic: Accept on open requests assigns current user as `requestedTo` and sets status `accepted`; reject on targeted requests only by the targeted donor.
+  - **All Requests Tab**: Shows all open requests (`status === 'open'`) that are discoverable by all donors, including both urgent and non-urgent requests.
   - **Automatic Donation Intent**: When a donor accepts a blood request, a donation record is automatically created with status "pending" to track the commitment. No separate action needed.
-- Request History
-  - Tabs: All, Pending, Rejected, Accepted, Fulfilled, Cancelled.
-  - Patient view: requests I posted by status; link to donor profiles and donation history (accepted donors).
-  - Donor view: blood donations I committed to and accepted requests where I am `requestedTo`.
+
+#### **"Request To Me" Function - Detailed Behavioral Specification**
+
+##### **How "Request To Me" Works (Step-by-Step Behavior)**
+1. **Targeted Request Creation Process**:
+   - Patient navigates to Request Blood screen
+   - Patient selects specific donor from Donor List (taps "Request" button)
+   - Request Blood form opens with `requestedTo` field pre-filled with donor's UID
+   - Patient fills required fields and submits
+   - System creates request with status `pending` (not `open`)
+   - System immediately triggers notification to targeted donor
+
+2. **Donor Notification Behavior**:
+   - **Firebase Realtime Database Listener**: Donor's inbox automatically updates via Firebase listener
+   - **In-App Visual Indicator**: New request appears in "Request To Me" tab with unread badge
+   - **No External Notifications**: Uses only Firebase free tier (no push notifications to avoid costs)
+
+3. **Inbox Display Behavior**:
+   - **"Request To Me" Tab**: Shows only requests where `requestedTo === currentUser.uid` AND `status === 'pending'`
+   - **"All Requests" Tab**: Shows only requests where `status === 'open'` (discoverable by all donors)
+   - **Real-time Updates**: Firebase listener automatically refreshes when new targeted requests arrive
+   - **Empty State**: Shows "No targeted requests yet" when no pending requests exist
+
+4. **User Acceptance Flow (Detailed Behavior)**:
+   - **Step 1**: Donor opens app and switches to Donor mode
+   - **Step 2**: System checks donor availability status (`available: true`)
+   - **Step 3**: Donor navigates to Inbox tab
+   - **Step 4**: Donor sees "Request To Me" tab with count badge showing number of pending requests
+   - **Step 5**: Donor taps "Request To Me" tab to view targeted requests
+   - **Step 6**: Donor sees list of targeted requests with patient details (name, blood group, city, hospital, notes)
+   - **Step 7**: Accept button is enabled only if donor is available; disabled with tooltip if not available
+   - **Step 8**: Donor taps "Accept" button on specific request
+   - **Step 9**: Confirmation dialog appears: "Accept this blood request? You will be committed to donating blood."
+   - **Step 10**: If donor confirms:
+     - Request status changes from `pending` to `accepted`
+     - `requestedTo` field is set to current donor's UID
+     - `acceptedAt` timestamp is added to request
+     - `acceptedBy` field is set to current donor's UID
+     - Automatic donation record created in `donations/{donorUid}/{donationId}` with status `pending`
+     - Patient receives in-app notification (via Firebase listener)
+     - Request disappears from donor's "Request To Me" tab
+     - Request disappears from "Urgent Requests" list (if it was urgent)
+     - Request appears in both donor and patient "Accepted" history
+   - **Step 11**: If donor cancels: No changes made, request remains in "Request To Me" tab
+
+5. **User Rejection Flow (Detailed Behavior)**:
+   - **Step 1-6**: Same as acceptance flow
+   - **Step 7**: Donor taps "Reject" button on specific request
+   - **Step 8**: Confirmation dialog appears: "Reject this blood request? The patient will be notified."
+   - **Step 9**: If donor confirms:
+     - Request status changes from `pending` to `rejected`
+     - `requestedTo` field is set to current donor's UID
+     - Patient receives in-app notification (via Firebase listener)
+     - Request disappears from donor's "Request To Me" tab
+     - Request appears in patient's "Rejected" history
+   - **Step 10**: If donor cancels: No changes made, request remains in "Request To Me" tab
+
+#### **Request Accept Flow - Detailed Behavioral Specification**
+
+##### **Core Accept Flow Requirements**
+- **Availability Check**: Donors can only accept requests when marked as available (`available: true`)
+- **Button State Management**: Accept button is disabled/hidden when donor is not available
+- **Request Removal**: Accepted requests are immediately removed from all request lists
+- **History Visibility**: Accepted requests appear in both donor and patient history
+- **Status Updates**: Request status changes from `pending`/`open` to `accepted`
+
+##### **Step-by-Step Accept Flow Behavior**
+
+1. **Pre-Accept Validation**:
+   - **Step 1**: System checks if current user is in Donor mode
+   - **Step 2**: System verifies donor's availability status (`users/{uid}/available === true`)
+   - **Step 3**: System confirms request is still available for acceptance (`status === 'pending'` or `status === 'open'`)
+   - **Step 4**: If any validation fails, Accept button is disabled with appropriate message
+
+2. **Accept Button State Management**:
+   - **Available Donor**: Accept button is enabled and visible
+   - **Unavailable Donor**: Accept button is disabled with tooltip "You must be available to accept requests"
+   - **Already Accepted**: Accept button is hidden, replaced with "Accepted" status indicator
+   - **Request Expired**: Accept button is disabled with "Request no longer available" message
+
+3. **Accept Action Execution**:
+   - **Step 1**: User taps "Accept" button on request
+   - **Step 2**: Confirmation dialog appears: "Accept this blood request? You will be committed to donating blood."
+   - **Step 3**: If user confirms:
+     - Request status changes from `pending`/`open` to `accepted`
+     - `requestedTo` field is set to current donor's UID
+     - `acceptedAt` timestamp is added to request
+     - Automatic donation record created in `donations/{donorUid}/{donationId}` with status `pending`
+     - Patient receives in-app notification (via Firebase listener)
+   - **Step 4**: If user cancels: No changes made, request remains available
+
+4. **Post-Accept UI Updates**:
+   - **Request Lists**: Accepted request immediately disappears from:
+     - Donor's "Request To Me" tab
+     - Donor's "All Requests" tab
+     - Urgent Requests list (if it was urgent)
+     - Any other request discovery lists
+   - **History Updates**: Accepted request appears in:
+     - Donor's "Accepted" history tab
+     - Patient's "Accepted" history tab
+   - **Button States**: Accept button is replaced with "Accepted" status indicator
+
+5. **Real-time Synchronization**:
+   - **Firebase Listeners**: All connected clients receive real-time updates
+   - **Immediate UI Updates**: No page refresh needed, changes appear instantly
+   - **Cross-Device Sync**: Changes sync across all user's devices
+   - **Offline Handling**: Changes are queued and applied when connection is restored
+
+##### **Accept Flow Error Handling**
+
+- **Donor Not Available**:
+  - Error: "You must mark yourself as available to accept blood requests"
+  - Action: Redirect to Profile to enable availability toggle
+  - UI: Accept button disabled with clear explanation
+
+- **Request Already Accepted**:
+  - Error: "This request has already been accepted by another donor"
+  - Action: Refresh request list to show current status
+  - UI: Show "Accepted by [Donor Name]" status
+
+- **Request Expired/Cancelled**:
+  - Error: "This request is no longer available"
+  - Action: Remove from request list
+  - UI: Show "Request Cancelled" or "Request Expired" status
+
+- **Network Error**:
+  - Error: "Unable to accept request. Please check your connection"
+  - Action: Retry mechanism with exponential backoff
+  - UI: Show retry button and loading state
+
+##### **Accept Flow Data Model Updates**
+
+```json
+{
+  "requests/{id}": {
+    "status": "accepted",
+    "requestedTo": "donorUid",
+    "acceptedAt": 1640995200000,
+    "acceptedBy": "donorUid"
+  },
+  "donations/{donorUid}/{donationId}": {
+    "id": "donationId",
+    "requestId": "requestId",
+    "status": "pending",
+    "date": 1640995200000,
+    "donorUid": "donorUid"
+  }
+}
+```
+
+##### **Accept Flow API Functions**
+
+- `canAcceptRequest(requestId, donorUid)`: Check if donor can accept specific request
+- `acceptRequest(requestId, donorUid)`: Execute accept action with full validation
+- `getAcceptableRequests(donorUid)`: Get list of requests donor can accept
+- `updateRequestStatus(requestId, status, donorUid)`: Update request status with validation
+
+##### **Accept Flow UI Components**
+
+- **Accept Button**: Dynamic button with state-based styling
+- **Status Indicators**: Clear visual feedback for request states
+- **Confirmation Dialogs**: User-friendly confirmation with clear consequences
+- **Error Messages**: Helpful error messages with suggested actions
+- **Loading States**: Visual feedback during async operations
+
+##### **Notification System (Free Firebase Implementation)**
+- **Primary Method**: Firebase Realtime Database listeners (completely free)
+- **Implementation**: Each user has a `notifications/{uid}` node in Firebase
+- **Notification Types**:
+  - `new_targeted_request`: Created when patient targets specific donor
+  - `request_accepted`: Created when donor accepts request
+  - `request_rejected`: Created when donor rejects request
+  - `donation_reminder`: Created for upcoming donation commitments
+  - `request_fulfilled`: Created when donation is completed
+
+- **Notification Behavior**:
+  - **Creation**: Notifications created in Firebase when actions occur
+  - **Delivery**: App listens to `notifications/{uid}` node for real-time updates
+  - **Display**: In-app notification badge and list (no external push notifications)
+  - **Marking Read**: User can mark notifications as read (updates `read: true` in Firebase)
+  - **Cleanup**: Notifications older than 30 days are automatically filtered out
+
+##### **Request Cancellation System (Detailed Behavior)**
+- **Cancellation Window**: Patients can cancel their own requests within 10 minutes of creation
+- **Cancellation Process**:
+  - **Step 1**: Patient creates a blood request
+  - **Step 2**: Within 10 minutes, "Cancel Request" button appears on request detail screen
+  - **Step 3**: Patient taps "Cancel Request" button
+  - **Step 4**: Confirmation dialog: "Cancel this request? This action cannot be undone."
+  - **Step 5**: If patient confirms:
+    - Request status changes from `pending`/`open` to `cancelled`
+    - Request disappears from donor inbox and urgent requests list
+    - Donors who were notified receive cancellation notification
+    - Request appears in patient's "Cancelled" history
+  - **Step 6**: If patient cancels: No changes made, request remains active
+
+- **Cancellation Restrictions**:
+  - **Time Limit**: Only cancellable within 10 minutes of creation
+  - **Status Check**: Cannot cancel if already accepted by donor
+  - **Creator Only**: Only the request creator can cancel their own requests
+  - **Visual Indicator**: Cancel button shows remaining time (e.g., "Cancel (8 min left)")
+
+##### **Soft Delete for History Management (Detailed Behavior)**
+- **Implementation**: Add `deleted: true` and `deletedAt: timestamp` fields to records
+- **User Actions**:
+  - **Delete Request**: User can delete their own requests from history
+  - **Delete Donation**: User can delete their own donation records
+  - **Delete Comment**: User can delete their own comments or comments on their requests
+
+- **Soft Delete Behavior**:
+  - **Step 1**: User navigates to History tab
+  - **Step 2**: User finds request/donation they want to delete
+  - **Step 3**: User taps "Delete" button (trash icon)
+  - **Step 4**: Confirmation dialog: "Delete this item? It will be removed from your history."
+  - **Step 5**: If user confirms:
+    - Record is marked with `deleted: true` and `deletedAt: currentTimestamp`
+    - Record disappears from user's history view
+    - Record remains in database for audit purposes
+    - Other users' views are not affected
+  - **Step 6**: If user cancels: No changes made
+
+- **Data Retention Policy**:
+  - **Soft Deleted Records**: Remain in database indefinitely for audit
+  - **User Privacy**: Deleted records are hidden from user interface
+  - **Admin Access**: Admins can view soft-deleted records if needed
+  - **Recovery**: Soft-deleted records can be restored by admin if necessary
+
+- **History Filtering**:
+  - **Default View**: Shows only non-deleted records (`deleted !== true`)
+  - **Admin View**: Can show all records including soft-deleted ones
+  - **Performance**: Client-side filtering to avoid additional Firebase queries
+- Request History (renamed from "Donation History")
+  - **Patient Mode**: Shows all requests I created (posted) with status filtering
+    - Tabs: All, Pending, Rejected, Accepted, Fulfilled, Cancelled
+    - Each request is clickable to view full details
+    - Links to donor profiles for accepted requests
+  - **Donor Mode**: Shows all requests I accepted as a donor
+    - Tabs: All, Pending, Accepted, Fulfilled, Cancelled
+    - Each request is clickable to view full details
+    - Shows my donation commitments and their status
+  - **Clickable Items**: All history items are clickable to open detailed view
+  - **Status Tracking**: Clear status indicators for each request
 - Request Detail
   - Full request data and comments thread (name, timestamp, message). Actions based on role and status.
+  - **Header Layout**: Consistent with other pages - app branding (left), screen title (center), action buttons (right).
+  - **Action Button Visibility**: "Accept" button only visible when user is in Donor mode; hidden for Patient mode users.
   - **No Manual Donation Recording**: Donation records are automatically created when donors accept requests; no separate recording action needed.
 - Donor Profile (public)
   - Public profile view with donation stats and availability indicator.
@@ -140,13 +385,21 @@ misplace
 - `users/{uid}` → UserProfile
   - { uid, name, email?, gender?, bloodGroup?, city?, phone?, cnic?, available?, mode?: 'donor'|'patient', themePreference?: 'system'|'light'|'dark', createdAt, updatedAt }
 - `requests/{id}` → BloodRequest
-  - { id, createdBy, patientName, requiredBloodGroup, city, gender?, hospital?, locationAddress?, locationLat?, locationLng?, unitsRequired?, neededBy?, notes?, requestedTo?, status, createdAt }
+  - { id, createdBy, patientName, requiredBloodGroup, city, gender?, hospital?, locationAddress?, locationLat?, locationLng?, unitsRequired?, neededBy?, notes?, requestedTo?, status, urgent?: boolean, acceptedAt?: number, acceptedBy?: string, createdAt, deleted?: boolean, deletedAt?: number }
 - `donations/{uid}/{id}` → Donation
-  - { id, requestId, status, date }
+  - { id, requestId, status, date, deleted?: boolean, deletedAt?: number }
 - `comments/{requestId}/{id}` → Comment
-  - { id, uid, text, createdAt }
+  - { id, uid, text, createdAt, deleted?: boolean, deletedAt?: number }
 - `money_donations/{uid}/{id}` → MoneyDonation (Stripe integration)
-  - { id, uid, amount, currency, purpose?, createdAt, receiptUrl?, stripePaymentId?, stripeSessionId? }
+  - { id, uid, amount, currency, purpose?, createdAt, receiptUrl?, stripePaymentId?, stripeSessionId?, deleted?: boolean, deletedAt?: number }
+- `notifications/{uid}/{id}` → Notification (Free Firebase Implementation)
+  - { id, uid, type, title, message, data?, read: boolean, createdAt, expiresAt?: number }
+- `badges/{uid}/{id}` → DonorBadge (AI-Generated)
+  - { id, uid, badgeId, name, description, icon, color, criteria, earnedAt, createdAt }
+- `impact_stories/{uid}/{id}` → ImpactStory (AI-Generated)
+  - { id, uid, type, title, content, statistics, visualElements, generatedAt, createdAt }
+- `ai_analytics/{uid}` → DonorAnalytics (AI-Processed)
+  - { uid, responseTime, successRate, donationCount, impactScore, lastAnalyzed, createdAt }
 
 #### Client API Contract & Guardrails (implementation guide)
 - All data access via `lib/*`. No direct Firebase in UI.
@@ -165,13 +418,17 @@ misplace
   - `postRequest(input)`: targeted → status `pending`; general → `open`; returns request id.
   - `getRequestById(id)`: fetch one request.
   - `listMyRequests(uid?)`: requests created by user.
-  - `listRequests(filters?, options?)`: browse with filters: status, city, requiredBloodGroup, createdBy, requestedTo, mineOnly, toMeOnly, openOnly.
+  - `listRequests(filters?, options?)`: browse with filters: status, city, requiredBloodGroup, createdBy, requestedTo, mineOnly, toMeOnly, openOnly, urgentOnly.
   - `listDonorInbox(options?)`: targeted-to-me (`pending`) + discoverable `open` requests.
-  - `acceptRequest(id)`: donor accepts; un-targeted requests assign current user; automatically creates donation record.
+  - `canAcceptRequest(requestId, donorUid)`: check if donor can accept specific request (availability + status validation).
+  - `acceptRequest(requestId, donorUid)`: donor accepts with full validation; un-targeted requests assign current user; automatically creates donation record; removes from urgent requests list; updates status to `accepted`.
   - `rejectRequest(id)`: donor rejects; only targeted donor may reject targeted.
-  - `cancelRequest(id)`: creator cancels; status `cancelled`.
+  - `cancelRequest(id)`: creator cancels; status `cancelled`; only allowed within 10 minutes of creation.
   - `markFulfilled(id)`: creator marks fulfilled; status `fulfilled`.
   - `getDonorStats(uid)`: totals for received/accepted/rejected.
+  - `canCancelRequest(requestId)`: check if request can be cancelled (within 10 minutes and by creator).
+  - `getAcceptableRequests(donorUid)`: get list of requests donor can accept (filters by availability + status).
+  - `updateRequestStatus(requestId, status, donorUid)`: update request status with validation and proper state management.
 
 - Donations (`lib/donations`)
   - `createDonationRecord(requestId, donorUid)`: automatically called when donor accepts a request; creates pending blood donation record; returns id.
@@ -186,6 +443,34 @@ misplace
   - `addComment(requestId, uid, text)`: add a comment.
   - `listComments(requestId)`: list comments.
   - `deleteComment(requestId, commentId)`: author (or request creator) deletes.
+
+- Notifications (`lib/notifications`) - Free Firebase Implementation
+  - `createNotification(uid, type, title, message, data?)`: create notification for user.
+  - `listNotifications(uid)`: fetch user's notifications (unread first, filtered by expiration).
+  - `markNotificationRead(notificationId)`: mark notification as read.
+  - `markAllNotificationsRead(uid)`: mark all user notifications as read.
+  - `deleteNotification(notificationId)`: delete notification.
+  - `sendTargetedRequestNotification(donorUid, requestId)`: send notification for new targeted request.
+  - `sendRequestResponseNotification(patientUid, requestId, response)`: send notification for accept/reject.
+
+- Soft Delete (`lib/softDelete`) - History Management
+  - `softDeleteRequest(requestId)`: mark request as deleted (soft delete).
+  - `softDeleteDonation(donationId)`: mark donation as deleted (soft delete).
+  - `softDeleteComment(commentId, requestId)`: mark comment as deleted (soft delete).
+  - `softDeleteMoneyDonation(donationId)`: mark money donation as deleted (soft delete).
+  - `restoreRequest(requestId)`: restore soft-deleted request (admin only).
+  - `restoreDonation(donationId)`: restore soft-deleted donation (admin only).
+  - `listDeletedItems(uid, type)`: list soft-deleted items for admin recovery.
+
+- AI Features (`lib/ai`) - Gemini API Integration
+  - `analyzeDonorBehavior(uid)`: analyze donor data and suggest badges via Gemini API.
+  - `getSmartDonorSelection(requestId)`: get AI-selected donors for notifications.
+  - `generateImpactStory(uid, period)`: generate personalized impact story.
+  - `updateDonorBadges(uid)`: update donor badges based on AI analysis.
+  - `getDonorAnalytics(uid)`: get AI-processed donor analytics.
+  - `createBadge(badgeData)`: create new badge in donor's profile.
+  - `getImpactStories(uid)`: get all impact stories for donor.
+  - `triggerSmartNotification(requestId)`: trigger AI-powered notification system.
 
 
 #### Error Categories (UI-facing)
@@ -344,3 +629,280 @@ misplace
 - Accessibility: high contrast, large touch targets, announce status changes.
 - Telemetry (optional): log key events (post, accept, reject, fulfill, money donate) without PII.
 - Environment: document Firebase config and any env overrides in README; do not commit secrets.
+
+#### **AI-Powered Features Plan (Gemini API via Backend)**
+
+##### **Donor Badges & Gamification System**
+- **AI Badge Recommendations**: Gemini analyzes donor behavior patterns and suggests personalized badges
+- **Badge Categories**:
+  - **Response Badges**: "Reliable Responder" (responds within 1 hour), "Quick Responder" (responds within 30 minutes)
+  - **Donation Badges**: "Emergency Hero" (donates during critical hours), "Regular Donor" (monthly donations)
+  - **Impact Badges**: "Life Saver" (saved 5+ lives), "Community Champion" (helps in multiple cities)
+  - **Special Badges**: "Rare Blood Hero" (donates rare blood types), "Night Owl" (donates after hours)
+- **Badge Behavior**:
+  - **Automatic Assignment**: AI analyzes donation history, response times, and impact
+  - **Real-time Updates**: Badges update as donor behavior changes
+  - **Profile Display**: Badges shown on donor profile and in donor lists
+  - **Motivation System**: Badges encourage repeat donations and better response rates
+
+##### **Smart Notifications (AI-Powered Targeting)**
+- **Intelligent Donor Selection**: Gemini analyzes donor availability, location, blood group, and response history
+- **Smart Filtering Logic**:
+  - **Location Priority**: Notify closest donors first (within 10km radius)
+  - **Blood Group Match**: Only notify compatible blood group donors
+  - **Availability Status**: Only notify donors marked as available
+  - **Response History**: Prioritize donors with good response rates
+  - **Time-based Filtering**: Consider donor's typical active hours
+- **Notification Behavior**:
+  - **Batch Size**: Maximum 10 donors per request (instead of notifying all 100)
+  - **Priority Queue**: Closest + most responsive donors get notified first
+  - **Fallback System**: If no response in 30 minutes, notify next batch
+  - **Smart Timing**: Send notifications during donor's active hours
+
+##### **Impact Summaries (NLP Storytelling)**
+- **AI-Generated Stories**: Gemini creates personalized impact narratives
+- **Story Types**:
+  - **Personal Impact**: "Your 3 donations this year helped save 9 lives in Karachi"
+  - **Community Impact**: "You're among the top 10% of donors in your city"
+  - **Time-based Stories**: "This month, you responded to 2 emergency requests"
+  - **Achievement Stories**: "You've maintained a 100% response rate for 6 months"
+- **Story Generation**:
+  - **Data Analysis**: AI analyzes donation history, response times, and patient outcomes
+  - **Emotional Engagement**: Uses positive language and emotional triggers
+  - **Visual Elements**: Stories include statistics, charts, and motivational messages
+  - **Sharing Features**: Users can share their impact stories on social media
+
+##### **Backend Architecture for AI Features**
+- **Node.js Backend**: Express.js server handling Gemini API calls
+- **Gemini API Integration**: Google's Gemini API for AI-powered features
+- **API Endpoints**:
+  - `POST /api/ai/analyze-donor-behavior`: Analyze donor data for badge recommendations
+  - `POST /api/ai/smart-notifications`: Get smart donor selection for notifications
+  - `POST /api/ai/generate-impact-story`: Generate personalized impact stories
+  - `POST /api/ai/update-badges`: Update donor badges based on behavior
+- **Data Processing**:
+  - **Donor Analysis**: Process donation history, response times, location data
+  - **Smart Filtering**: AI-powered donor selection for notifications
+  - **Story Generation**: NLP processing for impact summaries
+  - **Badge Logic**: Automated badge assignment based on behavior patterns
+
+##### **AI Feature Implementation Details**
+
+###### **Donor Badges System**
+- **Badge Data Structure**:
+  ```json
+  {
+    "badgeId": "reliable_responder",
+    "name": "Reliable Responder",
+    "description": "Responds to requests within 1 hour",
+    "icon": "clock-icon",
+    "color": "#4CAF50",
+    "criteria": {
+      "responseTime": "< 3600000", // 1 hour in milliseconds
+      "minRequests": 5,
+      "successRate": "> 0.8"
+    },
+    "earnedAt": "2024-01-15T10:30:00Z"
+  }
+  ```
+- **Badge Assignment Process**:
+  1. **Data Collection**: Gather donor's donation history, response times, success rates
+  2. **AI Analysis**: Gemini analyzes patterns and suggests appropriate badges
+  3. **Criteria Matching**: Check if donor meets badge requirements
+  4. **Automatic Assignment**: Assign badges and update donor profile
+  5. **Notification**: Notify donor of new badge achievement
+
+###### **Smart Notifications System**
+- **Donor Selection Algorithm**:
+  1. **Filter Available Donors**: Only donors marked as available
+  2. **Blood Group Matching**: Filter by compatible blood groups
+  3. **Location Filtering**: Prioritize donors within 10km radius
+  4. **Response History Analysis**: Rank by response rate and speed
+  5. **Time-based Filtering**: Consider donor's active hours
+  6. **AI Optimization**: Gemini selects top 10 most likely responders
+- **Notification Queue Management**:
+  - **Primary Batch**: Top 10 donors notified immediately
+  - **Fallback System**: Next 10 donors notified after 30 minutes if no response
+  - **Emergency Escalation**: All compatible donors notified for critical requests
+
+###### **Impact Story Generation**
+- **Story Data Structure**:
+  ```json
+  {
+    "storyId": "impact_2024_q1",
+    "type": "personal_impact",
+    "title": "Your Impact This Quarter",
+    "content": "Your 3 donations this year helped save 9 lives in Karachi...",
+    "statistics": {
+      "donations": 3,
+      "livesSaved": 9,
+      "responseTime": "45 minutes average",
+      "rank": "Top 15% in your city"
+    },
+    "visualElements": ["chart", "badge", "timeline"],
+    "generatedAt": "2024-01-15T10:30:00Z"
+  }
+  ```
+- **Story Generation Process**:
+  1. **Data Aggregation**: Collect donor's complete history
+  2. **Pattern Analysis**: Identify key achievements and patterns
+  3. **AI Processing**: Gemini generates personalized narrative
+  4. **Emotional Enhancement**: Add motivational and emotional elements
+  5. **Visual Integration**: Include charts, statistics, and visual elements
+  6. **Delivery**: Present story in user's profile and history
+
+##### **API Integration Specifications**
+- **Gemini API Endpoints**:
+  - **Badge Analysis**: `POST /v1/models/gemini-pro:generateContent`
+  - **Smart Notifications**: `POST /v1/models/gemini-pro:generateContent`
+  - **Story Generation**: `POST /v1/models/gemini-pro:generateContent`
+- **Request Format**:
+  ```json
+  {
+    "contents": [{
+      "parts": [{
+        "text": "Analyze this donor data and suggest appropriate badges: {donorData}"
+      }]
+    }],
+    "generationConfig": {
+      "temperature": 0.7,
+      "maxOutputTokens": 1000
+    }
+  }
+  ```
+- **Response Processing**:
+  - **JSON Parsing**: Extract structured data from Gemini responses
+  - **Validation**: Ensure response meets expected format
+  - **Database Updates**: Update Firebase with AI-generated content
+  - **Error Handling**: Fallback to default behavior if AI fails
+
+#### **Implementation Approach - Free Resources Only**
+
+##### **Firebase Free Tier Usage**
+- **Realtime Database**: Primary data storage (1GB free, 100 concurrent connections)
+- **Authentication**: User management (unlimited users on free tier)
+- **Hosting**: Static app hosting (10GB free)
+- **No Cloud Functions**: Avoid serverless functions to stay within free limits
+- **No Cloud Storage**: Use local storage for images and files
+
+##### **Notification Strategy (Free Implementation)**
+- **Primary Method**: Firebase Realtime Database listeners
+- **No Push Notifications**: Avoid Firebase Cloud Messaging costs
+- **In-App Only**: All notifications displayed within the app
+- **Real-time Updates**: Instant updates via Firebase listeners
+- **Offline Support**: Basic offline functionality using local storage
+
+##### **Data Management Strategy**
+- **Client-Side Filtering**: Filter data in the app to reduce Firebase reads
+- **Pagination**: Implement client-side pagination to limit data transfer
+- **Caching**: Use local storage to cache frequently accessed data
+- **Soft Delete**: Mark records as deleted instead of removing them
+- **Data Cleanup**: Automatically filter expired notifications client-side
+
+##### **Performance Optimization**
+- **Debounced Search**: Reduce Firebase queries during search
+- **Batch Operations**: Group multiple operations to reduce API calls
+- **Lazy Loading**: Load data only when needed
+- **Image Optimization**: Compress images before storage
+- **Minimal Dependencies**: Use only essential libraries to reduce bundle size
+
+#### **Current Implementation Status**
+- ✅ **Core Features**: User authentication, mode switching, basic request/accept flow
+- ✅ **Targeted Requests**: Working correctly - targeted requests appear in donor inbox
+- ✅ **Donor Inbox**: Properly displays targeted and discoverable requests
+- ✅ **Header Actions**: Mode switch and availability toggle implemented
+- ✅ **Theme System**: Light/dark theme support with persistence
+- ✅ **Responsive Design**: Header adapts to screen sizes
+- ✅ **Request Accept Flow**: Comprehensive accept flow with availability validation, button state management, and proper request removal
+- 🔄 **In Progress**: Enhanced search, real-time updates, accessibility improvements
+- 📋 **Planned**: Advanced filtering, notification system, offline support
+
+#### **Recent Bug Fixes & Improvements**
+- ✅ **Urgent Request Removal**: Accepted requests are immediately removed from urgent requests list
+- ✅ **Request Cancellation**: Patients can cancel requests within 10 minutes of creation
+- ✅ **Urgent Flag**: Added urgent flag to request data model for proper filtering
+- ✅ **History Naming**: Renamed "Donation History" to "Request History" with proper mode-specific content
+- ✅ **All Requests Display**: Fixed "All Requests" tab to show all open requests (urgent and non-urgent)
+- ✅ **Clickable History**: All history items are now clickable to view full details
+- ✅ **Active Filter Behavior**: Clarified "Active Only" filter behavior in donor list
+- ✅ **Request Detail Actions**: "Accept" button only visible for donors, not patients
+- ✅ **Header Consistency**: Request detail page header matches other pages layout
+- ✅ **Accept Flow Validation**: Donors must be available to accept requests; accept button disabled when unavailable
+- ✅ **Request Removal on Accept**: Accepted requests immediately disappear from all request lists
+- ✅ **History Integration**: Accepted requests properly appear in both donor and patient history
+- ✅ **Accept Flow API**: Added comprehensive API functions for accept flow validation and execution
+
+#### **AI Features Implementation Timeline**
+
+##### **Phase 1: Backend Setup (Week 1-2)**
+- **Node.js Backend**: Set up Express.js server with Gemini API integration
+- **API Endpoints**: Create AI-powered endpoints for badge analysis and smart notifications
+- **Database Schema**: Add new tables for badges, impact stories, and AI analytics
+- **Testing**: Test Gemini API integration and response processing
+
+##### **Phase 2: Badge System (Week 3-4)**
+- **Badge Logic**: Implement badge criteria and assignment algorithms
+- **AI Integration**: Connect badge analysis to Gemini API
+- **UI Components**: Create badge display components for profiles and donor lists
+- **Real-time Updates**: Implement automatic badge updates based on behavior
+
+##### **Phase 3: Smart Notifications (Week 5-6)**
+- **Donor Selection**: Implement AI-powered donor selection algorithm
+- **Notification Queue**: Create smart notification queuing system
+- **Fallback System**: Implement fallback notification for non-responders
+- **Performance Optimization**: Optimize for large donor databases
+
+##### **Phase 4: Impact Stories (Week 7-8)**
+- **Story Generation**: Implement AI-powered impact story generation
+- **Data Analysis**: Create donor analytics and pattern recognition
+- **Visual Elements**: Add charts, statistics, and visual story elements
+- **Sharing Features**: Implement social media sharing for impact stories
+
+##### **Cost Considerations**
+- **Gemini API Costs**: 
+  - **Free Tier**: 15 requests per minute, 1M tokens per month
+  - **Paid Tier**: $0.0005 per 1K characters for input, $0.0015 per 1K characters for output
+  - **Estimated Monthly Cost**: $10-50 for moderate usage (1000+ users)
+- **Backend Hosting**:
+  - **Free Options**: Railway, Render, Heroku (with limitations)
+  - **Paid Options**: AWS, Google Cloud, DigitalOcean ($5-20/month)
+- **Total Monthly Cost**: $15-70 for full AI features
+
+#### **UI/UX Consistency Requirements**
+
+##### **Header Layout Standardization**
+- **Consistent Structure**: All pages must follow the same header layout pattern
+  - Left: App logo/branding (40x40px with 8px border radius)
+  - Center: Screen title (28px font, bold, theme-appropriate color)
+  - Right: Action buttons (mode switch, availability toggle, etc.)
+- **Minimum Height**: 60px to accommodate toggle switches without text overlap
+- **Padding**: 16px horizontal padding for consistent spacing
+- **Theme Support**: Headers must adapt to light/dark theme changes
+
+##### **Action Button Visibility Rules**
+- **Mode-Based Actions**: Action buttons visibility based on user's current mode
+  - **Donor Mode**: Show availability toggle, accept request buttons
+  - **Patient Mode**: Hide donor-specific actions, show request creation actions
+- **Role-Based Actions**: Actions based on user's relationship to content
+  - **Request Creator**: Can cancel, mark fulfilled, view donor profiles
+  - **Targeted Donor**: Can accept/reject targeted requests
+  - **General Donor**: Can accept open requests
+  - **Non-Donor**: Cannot see accept buttons on request details
+
+##### **Filter Behavior Specifications**
+- **"Active Only" Filter**: 
+  - **Enabled**: Shows only users with `available: true` status
+  - **Disabled**: Shows all users regardless of availability status
+  - **Visual Indicator**: Clear toggle state with descriptive text
+  - **Persistence**: Filter state should persist during session
+
+#### **Next Phase Improvements**
+1. 🔄 **Enhanced Search**: Real-time search with debouncing for better performance
+2. 🔄 **Real-time Updates**: Automatic refresh for new requests and status changes
+3. 🔄 **Advanced Filtering**: Multi-criteria filtering for donors and requests
+4. ✅ **Notification System**: In-app notifications using Firebase free tier
+5. ✅ **AI Badge System**: Gamification with AI-powered badge recommendations
+6. ✅ **Smart Notifications**: AI-optimized donor selection for notifications
+7. ✅ **Impact Stories**: AI-generated personalized impact narratives
+8. 📋 **Offline Support**: Data persistence for better user experience
+9. 📋 **Accessibility**: Screen reader support and keyboard navigation

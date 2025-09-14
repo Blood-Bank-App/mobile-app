@@ -5,7 +5,7 @@ import { acceptRequest, listRequests } from '@/lib/requests';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function HomeScreen() {
@@ -20,7 +20,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     (async () => {
-      const reqs = await listRequests({ status: ['open', 'pending'] });
+      const reqs = await listRequests({ status: ['open', 'pending'], urgentOnly: true });
       setUrgent(reqs.slice(0, 10));
     })();
   }, []);
@@ -42,8 +42,8 @@ export default function HomeScreen() {
       setAcceptingRequest(requestId);
       await acceptRequest(requestId);
       Alert.alert('Success', 'Request accepted! The patient will be notified.');
-      // Refresh urgent requests
-      const reqs = await listRequests({ status: ['open', 'pending'] });
+      // Refresh urgent requests - remove accepted request from list
+      const reqs = await listRequests({ status: ['open', 'pending'], urgentOnly: true });
       setUrgent(reqs.slice(0, 10));
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Failed to accept request');

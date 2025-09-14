@@ -75,7 +75,12 @@ export default function RequestListScreen() {
               </TouchableOpacity>
             </Link>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              {(item.status === 'open' || item.status === 'pending') && (
+              {item.status === 'open' && (
+                <TouchableOpacity style={styles.primaryButton} onPress={() => onAccept(item.id)}>
+                  <Text style={styles.primaryText}>Accept</Text>
+                </TouchableOpacity>
+              )}
+              {item.status === 'pending' && item.requestedTo === uid && (
                 <>
                   <TouchableOpacity style={styles.primaryButton} onPress={() => onAccept(item.id)}>
                     <Text style={styles.primaryText}>Accept</Text>

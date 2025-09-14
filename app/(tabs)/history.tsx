@@ -3,7 +3,8 @@ import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { listMyDonations } from '@/lib/donations';
 import { listMyRequests, listRequests } from '@/lib/requests';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type HistoryItem = {
@@ -18,6 +19,7 @@ export default function HistoryScreen() {
   const { theme } = useThemeCustom();
   const isDark = theme === 'dark';
   const { mode } = useMode();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'rejected' | 'accepted' | 'fulfilled' | 'cancelled'>('all');
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
@@ -70,10 +72,16 @@ export default function HistoryScreen() {
     return statusMap[activeTab]?.includes(item.status) ?? false;
   });
 
+  const handleItemPress = (item: HistoryItem) => {
+    // Extract request ID from the item ID (remove prefix like 'r_' or 'd_')
+    const requestId = item.id.startsWith('r_') ? item.id.substring(2) : item.id;
+    router.push(`/request/${requestId}`);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
       <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>
-        {mode === 'patient' ? 'Request History' : 'Donation History'}
+        Request History
       </Text>
       
       <View style={styles.tabs}>
@@ -95,11 +103,16 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
         renderItem={({ item }) => (
-          <View style={[styles.card, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]}>
+          <TouchableOpacity 
+            style={[styles.card, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]}
+            onPress={() => handleItemPress(item)}
+            activeOpacity={0.7}
+          >
             <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{new Date(item.date).toLocaleDateString()}</Text>
             <Text style={[styles.name, { color: isDark ? '#fff' : '#111827' }]}>{item.patient ?? 'N/A'}</Text>
             <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{item.hospital ?? '—'} • {item.status}</Text>
-          </View>
+            <Text style={[styles.clickHint, { color: isDark ? '#9CA3AF' : '#9CA3AF' }]}>Tap to view details</Text>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={[styles.empty, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>No history yet.</Text>}
       />
@@ -124,6 +137,7 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 16, fontWeight: '600' },
   meta: { fontSize: 14, opacity: 0.7 },
+  clickHint: { fontSize: 12, opacity: 0.6, fontStyle: 'italic', marginTop: 4 },
   empty: { textAlign: 'center', marginTop: 24, opacity: 0.6 },
 });
 
