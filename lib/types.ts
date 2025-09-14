@@ -29,8 +29,13 @@ export type BloodRequest = {
   neededBy?: number;
   notes?: string;
   requestedTo?: string; // specific donor uid
+  urgent?: boolean; // urgent flag for high-priority requests
   status: 'open' | 'pending' | 'accepted' | 'rejected' | 'fulfilled' | 'cancelled';
+  acceptedAt?: number; // timestamp when request was accepted
+  acceptedBy?: string; // uid of donor who accepted the request
   createdAt: number;
+  deleted?: boolean; // soft delete flag
+  deletedAt?: number; // soft delete timestamp
 };
 
 export type Donation = {

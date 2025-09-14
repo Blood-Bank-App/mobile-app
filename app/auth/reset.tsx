@@ -3,7 +3,7 @@ import { auth } from '@/database/firebase';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Image } from 'expo-image';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ResetScreen() {

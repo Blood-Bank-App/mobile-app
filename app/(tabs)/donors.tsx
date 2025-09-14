@@ -4,7 +4,7 @@ import { BLOOD_GROUPS, CITIES_PK } from '@/data/pk';
 import { listAllUsers } from '@/lib/users';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, Linking, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type Donor = {
@@ -30,18 +30,19 @@ export default function DonorsScreen() {
     (async () => {
       try {
         const profiles = await listAllUsers();
-        setDonors(
-          profiles.map((p) => ({
-            id: p.uid,
-            name: p.name || '(No Name)',
-            bloodGroup: p.bloodGroup ?? '-',
-            city: p.city ?? '-',
-            gender: p.gender,
-            available: p.available,
-            phone: p.phone,
-          }))
-        );
+        const mappedDonors = profiles.map((p) => ({
+          id: p.uid,
+          name: p.name || '(No Name)',
+          bloodGroup: p.bloodGroup ?? '-',
+          city: p.city ?? '-',
+          gender: p.gender,
+          available: Boolean(p.available === true || String(p.available) === 'true'), // Normalize to boolean
+          phone: p.phone,
+        }));
+        
+        setDonors(mappedDonors);
       } catch (e) {
+        console.error('Failed to load donors:', e);
         setDonors([]);
       }
     })();
@@ -49,7 +50,8 @@ export default function DonorsScreen() {
 
   const filtered = useMemo(() => {
     return donors.filter((d) => {
-      if (onlyActive && d.available === false) return false;
+      // Only show donors with available: true
+      if (onlyActive && d.available !== true) return false;
       if (cityFilter !== 'all' && d.city !== cityFilter) return false;
       if (selectedBloodGroups.length > 0 && !selectedBloodGroups.includes(d.bloodGroup)) return false;
       if (query && !`${d.name} ${d.city} ${d.bloodGroup}`.toLowerCase().includes(query.toLowerCase())) return false;
@@ -124,8 +126,21 @@ export default function DonorsScreen() {
           )}
         />
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-          <Text style={{ fontWeight: '600', color: isDark ? '#fff' : '#111827' }}>Active only</Text>
-          <Switch value={onlyActive} onValueChange={setOnlyActive} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontWeight: '600', color: isDark ? '#fff' : '#111827', fontSize: 16 }}>Active only</Text>
+            <Text style={{ fontSize: 12, color: isDark ? '#9CA3AF' : '#6B7280', marginTop: 2 }}>
+              {onlyActive ? `Showing ${filtered.length} available donors` : `Showing ${filtered.length} donors`}
+            </Text>
+            <Text style={{ fontSize: 10, color: isDark ? '#6B7280' : '#9CA3AF', marginTop: 1 }}>
+              Filter: {onlyActive ? 'ON' : 'OFF'} | Total: {donors.length}
+            </Text>
+          </View>
+          <Switch 
+            value={onlyActive} 
+            onValueChange={setOnlyActive}
+            trackColor={{ false: '#767577', true: '#E11D48' }}
+            thumbColor={onlyActive ? '#fff' : '#f4f3f4'}
+          />
         </View>
       </View>
       <FlatList
@@ -137,7 +152,14 @@ export default function DonorsScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Image source={require('@/assets/images/profile.png')} style={{ width: 36, height: 36, borderRadius: 18 }} />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.name, { color: isDark ? '#fff' : '#111827' }]}>{item.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={[styles.name, { color: isDark ? '#fff' : '#111827' }]}>{item.name}</Text>
+                  {item.available && (
+                    <View style={styles.availableIndicator}>
+                      <Text style={styles.availableText}>Available</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{item.bloodGroup} • {item.city}</Text>
               </View>
             </View>
@@ -222,6 +244,17 @@ const styles = StyleSheet.create({
   requestText: { color: '#fff', fontWeight: '600' },
   outlineButton: { borderColor: '#E11D48', borderWidth: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
   outlineText: { color: '#E11D48', fontWeight: '600' },
+  availableIndicator: { 
+    backgroundColor: '#10B981', 
+    paddingHorizontal: 6, 
+    paddingVertical: 2, 
+    borderRadius: 8 
+  },
+  availableText: { 
+    color: '#fff', 
+    fontSize: 10, 
+    fontWeight: '600' 
+  },
   empty: { textAlign: 'center', marginTop: 24, opacity: 0.6 },
 });
 

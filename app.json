@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.zutymesep.upgrade53"
     },
     "web": {
       "bundler": "metro",
@@ -40,7 +41,17 @@
     },
     "extra": {
       "stripePublishableKey": "pk_test_51RyataPGd9QijKjn1JQ1iGVOYE09NW9zK0IkTp9MXYvI5ofuudKRTAbZOOpOWiQh2K0V8ESXYZgaaKUkgPoPYm0K00vuWJ1t1Q",
-      "backendUrl": "https://bloodbank-backend.farjad8585.workers.dev"
+      "backendUrl": "https://bloodbank-backend.farjad8585.workers.dev",
+      "router": {},
+      "eas": {
+        "projectId": "0a4e12fc-28a1-44d1-af73-d55efdb137b8"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0a4e12fc-28a1-44d1-af73-d55efdb137b8"
     }
   }
 }

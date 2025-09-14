@@ -4,7 +4,7 @@ import { createStripePaymentIntent, recordMoneyDonation } from '@/lib/donations'
 import { Ionicons } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Link } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const PREDEFINED_AMOUNTS = [500, 1000, 2500, 5000];
