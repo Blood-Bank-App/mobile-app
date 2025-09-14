@@ -9,7 +9,7 @@ import { getUserProfile } from '@/lib/users';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Link, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, FlatList, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function RequestDetailScreen() {
@@ -63,8 +63,8 @@ export default function RequestDetailScreen() {
       if (req && mode === 'donor' && currentUid !== req.createdBy) {
         const canAcceptResult = await canAcceptRequest(id);
         setCanAccept(canAcceptResult);
-        
-        if (!canAccept) {
+
+        if (!canAcceptResult) {
           setAcceptButtonDisabled(true);
           if (req.status === 'accepted') {
             setAcceptButtonMessage('Already accepted');
