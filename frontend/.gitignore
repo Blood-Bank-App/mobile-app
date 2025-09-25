@@ -28,8 +28,3 @@ coverage
 *.sw?
 
 *.tsbuildinfo
-
-*/node_modules
-*/dist
-
-backend/wrangler.toml
