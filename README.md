@@ -1,50 +1,230 @@
-# Welcome to your Expo app 👋
+# Blood Bank Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application for the Blood Bank system, built with Expo Router and integrated with a Python FastAPI backend.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **JWT Authentication**: Secure login/signup with token-based authentication
+- **Real-time Updates**: Socket.IO integration for live notifications and updates
+- **Blood Request Management**: Create, accept, and track blood donation requests
+- **Donor Profiles**: Manage donor availability and profile information
+- **Push Notifications**: OneSignal integration for important alerts
+- **Payment Integration**: Stripe for money donations
+- **AI Chat Support**: Real-time AI assistance for users
+- **Dark/Light Theme**: User preference support
 
+## Tech Stack
+
+- **Framework**: React Native with Expo Router
+- **Backend**: Python FastAPI with MongoDB
+- **Authentication**: JWT tokens
+- **Real-time**: Socket.IO WebSocket
+- **Notifications**: OneSignal
+- **Payments**: Stripe
+- **State Management**: React Context
+- **Navigation**: Expo Router (file-based routing)
+
+## Prerequisites
+
+- Node.js 18+ and npm/yarn
+- Expo CLI (`npm install -g @expo/cli`)
+- Python backend running on `http://localhost:8000`
+- MongoDB database
+- OneSignal account (for push notifications)
+- Stripe account (for payments)
+
+## Installation
+
+1. **Install dependencies**:
    ```bash
    npm install
    ```
 
-2. Start the app
-
-   ```bash
-   npx expo start
+2. **Environment Setup**:
+   Create a `.env.local` file in the root directory:
+   ```env
+   # API Configuration
+   EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api
+   EXPO_PUBLIC_SOCKET_URL=http://localhost:8000
+   
+   # App Configuration
+   EXPO_PUBLIC_APP_NAME=Blood Bank App
+   EXPO_PUBLIC_APP_VERSION=1.0.0
+   
+   # Development settings
+   EXPO_PUBLIC_DEBUG=true
+   
+   # OneSignal Configuration (for push notifications)
+   EXPO_PUBLIC_ONESIGNAL_APP_ID=your-onesignal-app-id
+   
+   # Stripe Configuration (for payments)
+   EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-publishable-key
    ```
 
-In the output, you'll find options to open the app in a
+3. **Start Development Server**:
+   ```bash
+   npm start
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. **Run on Device/Simulator**:
+   ```bash
+   npm run android  # Android
+   npm run ios      # iOS
+   npm run web      # Web
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+mobile-app/
+├── app/                    # Expo Router pages
+│   ├── (tabs)/            # Tab navigation screens
+│   │   ├── home.tsx       # Home screen
+│   │   ├── donors.tsx     # Available donors
+│   │   ├── request.tsx    # Blood requests
+│   │   ├── donate.tsx     # Donation screen
+│   │   ├── history.tsx    # Donation history
+│   │   ├── inbox.tsx      # Donor inbox
+│   │   └── profile.tsx    # User profile
+│   ├── auth/              # Authentication screens
+│   │   ├── login.tsx      # Login screen
+│   │   ├── signup.tsx     # Signup screen
+│   │   ├── reset.tsx      # Password reset
+│   │   └── onboarding.tsx # Profile setup
+│   └── request/           # Request-specific screens
+├── components/            # Reusable components
+├── constants/            # App constants (Colors, etc.)
+├── context/              # React Context providers
+├── data/                 # Static data (cities, blood groups)
+├── hooks/                # Custom React hooks
+├── lib/                  # Service layer (API calls)
+│   ├── users.ts          # User management
+│   ├── requests.ts       # Blood request management
+│   ├── donations.ts      # Donation management
+│   ├── comments.ts       # Comment management
+│   └── types.ts          # TypeScript types
+├── services/             # External service integrations
+│   ├── api.ts            # REST API client
+│   └── socket.ts         # Socket.IO client
+└── utils/                # Utility functions
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## API Integration
 
-## Learn more
+The mobile app integrates with the Python FastAPI backend:
 
-To learn more about developing your project with Expo, look at the following resources:
+### Authentication
+- **Login**: `POST /api/auth/login`
+- **Register**: `POST /api/auth/register`
+- **Refresh Token**: `POST /api/auth/refresh`
+- **Password Reset**: `POST /api/auth/reset-password`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### User Management
+- **Get Profile**: `GET /api/users/profile`
+- **Update Profile**: `PUT /api/users/profile`
+- **List Donors**: `GET /api/users/donors`
+- **Toggle Availability**: `PUT /api/users/availability`
 
-## Join the community
+### Blood Requests
+- **Create Request**: `POST /api/requests`
+- **List Requests**: `GET /api/requests`
+- **Accept Request**: `PUT /api/requests/:id/accept`
+- **Reject Request**: `PUT /api/requests/:id/reject`
+- **Donor Inbox**: `GET /api/requests/inbox`
 
-Join our community of developers creating universal apps.
+### Real-time Features
+The app uses Socket.IO for real-time updates:
+- New blood requests
+- Request status updates
+- Donor availability changes
+- Push notifications
+- AI chat responses
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `EXPO_PUBLIC_API_BASE_URL` | Backend API base URL | Yes |
+| `EXPO_PUBLIC_SOCKET_URL` | Socket.IO server URL | Yes |
+| `EXPO_PUBLIC_ONESIGNAL_APP_ID` | OneSignal app ID for push notifications | Yes |
+| `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key for payments | Yes |
+| `EXPO_PUBLIC_APP_NAME` | App display name | No |
+| `EXPO_PUBLIC_DEBUG` | Enable debug mode | No |
+
+## Development
+
+### Available Scripts
+
+- `npm start` - Start Expo development server
+- `npm run android` - Run on Android device/emulator
+- `npm run ios` - Run on iOS device/simulator
+- `npm run web` - Run in web browser
+- `npm run lint` - Run ESLint
+
+### Code Style
+
+- Use TypeScript for type safety
+- Follow React Native best practices
+- Use Expo Router for navigation
+- Implement proper error handling
+- Use React Context for state management
+
+## Deployment
+
+### Building for Production
+
+1. **Configure environment variables** for production
+2. **Build the app**:
+   ```bash
+   expo build:android  # Android APK
+   expo build:ios      # iOS IPA
+   ```
+
+3. **Deploy to app stores**:
+   - Google Play Store (Android)
+   - Apple App Store (iOS)
+
+### Environment Setup
+
+For production deployment, update these environment variables:
+```env
+EXPO_PUBLIC_API_BASE_URL=https://your-backend-domain.com/api
+EXPO_PUBLIC_SOCKET_URL=https://your-backend-domain.com
+EXPO_PUBLIC_ONESIGNAL_APP_ID=your-production-onesignal-id
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your-stripe-key
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **API Connection Failed**
+   - Check if Python backend is running
+   - Verify `EXPO_PUBLIC_API_BASE_URL` is correct
+   - Check network connectivity
+
+2. **Socket.IO Connection Issues**
+   - Verify `EXPO_PUBLIC_SOCKET_URL` is correct
+   - Check if WebSocket is enabled on backend
+   - Ensure JWT token is valid
+
+3. **Push Notifications Not Working**
+   - Verify OneSignal configuration
+   - Check device notification permissions
+   - Ensure OneSignal app ID is correct
+
+4. **Payment Issues**
+   - Verify Stripe configuration
+   - Check if using correct keys (test/live)
+   - Ensure backend webhook is configured
+
+## Contributing
+
+1. Follow the existing code style
+2. Use meaningful commit messages
+3. Test your changes thoroughly
+4. Update documentation as needed
+
+## License
+
+This project is part of the Blood Bank application suite.
