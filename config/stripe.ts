@@ -3,6 +3,14 @@
 
 import Constants from 'expo-constants';
 
+// Debug Stripe configuration
+console.log('🔧 Stripe Config Debug:', {
+  expoConfig: Constants.expoConfig?.extra?.stripePublishableKey,
+  envVar: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  hasExpoConfig: !!Constants.expoConfig?.extra?.stripePublishableKey,
+  hasEnvVar: !!process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+});
+
 // Stripe Configuration
 export const STRIPE_CONFIG = {
   // Client-side publishable key (safe to expose)
@@ -18,6 +26,12 @@ export const STRIPE_CONFIG = {
   // API Version
   apiVersion: '2023-10-16' as const,
 };
+
+console.log('🔧 Final Stripe Config:', {
+  publishableKey: STRIPE_CONFIG.publishableKey?.substring(0, 20) + '...',
+  backendUrl: STRIPE_CONFIG.backendUrl,
+  isValid: STRIPE_CONFIG.publishableKey.startsWith('pk_test_') || STRIPE_CONFIG.publishableKey.startsWith('pk_live_'),
+});
 
 // Stripe Product Configuration
 export const STRIPE_PRODUCTS = {

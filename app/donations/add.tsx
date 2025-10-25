@@ -1,16 +1,19 @@
 import { STRIPE_PRODUCTS, formatCurrency } from '@/config/stripe';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { createStripePaymentIntent } from '@/lib/donations';
+import { recordMoneyDonation } from '@/lib/donations';
+import { DonationAPI } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
+import { useStripe } from '@stripe/stripe-react-native';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function AddMoneyDonationScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
   const router = useRouter();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [amount, setAmount] = useState('');
   const [purpose, setPurpose] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,22 +38,61 @@ export default function AddMoneyDonationScreen() {
     try {
       setLoading(true);
       
-      // Create Stripe checkout session
-      const sessionUrl = await createStripePaymentIntent({
-        amount: amountNum,
-        currency: 'PKR',
-        purpose: purpose.trim() || undefined,
+      console.log('💰 Creating payment intent for amount:', amountNum, 'PKR');
+      
+      // Create payment intent via backend
+      const paymentIntent = await DonationAPI.createPaymentIntent(amountNum, 'PKR', purpose.trim() || undefined);
+      console.log('✅ Payment intent created:', { 
+        id: paymentIntent.id, 
+        clientSecret: paymentIntent.client_secret?.substring(0, 20) + '...',
+        status: paymentIntent.status 
       });
       
-      // Open Stripe checkout in browser
-      const supported = await Linking.canOpenURL(sessionUrl);
-      if (supported) {
-        await Linking.openURL(sessionUrl);
+      if (!paymentIntent.client_secret) {
+        throw new Error('Payment intent missing client secret');
+      }
+      
+      // Initialize payment sheet with Stripe SDK
+      console.log('🔧 Initializing payment sheet...');
+      const { error: initError } = await initPaymentSheet({
+        paymentIntentClientSecret: paymentIntent.client_secret,
+        merchantDisplayName: 'Blood Bank',
+        allowsDelayedPaymentMethods: true,
+      });
+
+      if (initError) {
+        console.error('❌ Payment sheet init error:', initError);
+        throw new Error(`Payment initialization failed: ${initError.message}`);
+      }
+
+      console.log('✅ Payment sheet initialized, presenting...');
+      // Present payment sheet
+      const { error: presentError } = await presentPaymentSheet();
+
+      if (presentError) {
+        console.error('❌ Payment sheet present error:', presentError);
+        if (presentError.code === 'Canceled') {
+          // User canceled - no error needed
+          console.log('🚫 User canceled payment');
+          return;
+        }
+        throw new Error(`Payment failed: ${presentError.message}`);
+      }
+
+      console.log('✅ Payment completed successfully!');
+      
+      // Payment succeeded - record the donation
+      try {
+        await recordMoneyDonation({
+          amount: amountNum,
+          currency: 'PKR',
+          purpose: purpose.trim() || undefined,
+          stripePaymentId: paymentIntent.id,
+        });
         
-        // Show success message and navigate
         Alert.alert(
-          'Payment Started',
-          'You will be redirected to complete your donation payment. Thank you for your generosity!',
+          'Donation Successful!',
+          'Thank you for your generous donation. Your contribution helps save lives.',
           [
             {
               text: 'View History',
@@ -67,11 +109,17 @@ export default function AddMoneyDonationScreen() {
         // Reset form
         setAmount('');
         setPurpose('');
-      } else {
-        throw new Error('Unable to open payment page');
+      } catch (recordError) {
+        console.error('❌ Failed to record donation:', recordError);
+        Alert.alert(
+          'Payment Successful',
+          'Your payment was processed, but there was an issue recording the donation. Please contact support.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
       }
     } catch (e: any) {
-      Alert.alert('Payment Error', e?.message ?? 'Failed to start payment process. Please try again.');
+      console.error('❌ Payment error:', e);
+      Alert.alert('Payment Error', e?.message ?? 'Failed to process payment. Please try again.');
     } finally {
       setLoading(false);
     }

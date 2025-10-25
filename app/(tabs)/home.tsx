@@ -1,7 +1,9 @@
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';
+import { AIAssistant } from '@/lib/ai';
 import { acceptRequest, listRequests } from '@/lib/requests';
+import { getUserProfile } from '@/lib/users';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -17,13 +19,32 @@ export default function HomeScreen() {
   const [searchGroup, setSearchGroup] = useState('');
   const [urgent, setUrgent] = useState<any[]>([]);
   const [acceptingRequest, setAcceptingRequest] = useState<string | null>(null);
+  const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [loadingAI, setLoadingAI] = useState(false);
 
   useEffect(() => {
     (async () => {
       const reqs = await listRequests({ status: ['open', 'pending'] });
       setUrgent(reqs.slice(0, 10));
+      
+      // Load AI suggestion
+      loadAISuggestion();
     })();
-  }, []);
+  }, [mode]);
+
+  const loadAISuggestion = async () => {
+    try {
+      setLoadingAI(true);
+      const userProfile = await getUserProfile();
+      const suggestion = await AIAssistant.getPersonalizedRecommendations(userProfile);
+      setAiSuggestion(suggestion.insights);
+    } catch (error) {
+      console.error('Failed to load AI suggestion:', error);
+      setAiSuggestion('Welcome to Blood Bank! I can help you with blood donation and requests.');
+    } finally {
+      setLoadingAI(false);
+    }
+  };
 
   const filteredUrgent = useMemo(() => {
     return urgent.filter((r) =>
@@ -95,14 +116,35 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* <View style={styles.actionsRow}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#E11D48' }]} onPress={() => router.replace('/(tabs)/request') }>
-          <Text style={styles.actionButtonText}>Request Blood</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, { borderColor: '#E11D48', borderWidth: 1 }]} onPress={() => router.replace('/(tabs)/donors') }>
-          <Text style={styles.actionButtonText}>Find Donors</Text>
-        </TouchableOpacity>
-      </View> */}
+      {/* AI Assistant Section */}
+      <View style={styles.aiSection}>
+        <View style={styles.aiHeader}>
+          <View style={styles.aiIconContainer}>
+            <Ionicons name="sparkles" size={20} color="#E11D48" />
+          </View>
+          <Text style={[styles.aiTitle, { color: Colors[theme as 'light' | 'dark'].text }]}>
+            AI Assistant
+          </Text>
+          <TouchableOpacity 
+            style={styles.aiChatButton}
+            onPress={() => router.push('/(tabs)/chat')}
+          >
+            <Ionicons name="chatbubbles" size={16} color="#E11D48" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={[
+          styles.aiSuggestionCard, 
+          { 
+            backgroundColor: Colors[theme as 'light' | 'dark'].cardBackground,
+            borderColor: Colors[theme as 'light' | 'dark'].border
+          }
+        ]}>
+          <Text style={[styles.aiSuggestionText, { color: Colors[theme as 'light' | 'dark'].text }]}>
+            {loadingAI ? 'Loading AI insights...' : aiSuggestion}
+          </Text>
+        </View>
+      </View>
 
       {/* Urgent Requests Section - Enhanced */}
       <View style={{ marginTop: 16 }}>
@@ -204,7 +246,50 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', marginTop: 4 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', marginTop: 4   },
+  
+  // AI Assistant Section
+  aiSection: {
+    marginTop: 16,
+    marginBottom: 8
+  },
+  aiHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8
+  },
+  aiIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E11D4820',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  aiTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    flex: 1
+  },
+  aiChatButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E11D48'
+  },
+  aiSuggestionCard: {
+    padding: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#E11D48'
+  },
+  aiSuggestionText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic'
+  },
   
   // Empty state
   emptyCard: { 

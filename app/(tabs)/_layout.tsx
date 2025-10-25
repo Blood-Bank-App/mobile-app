@@ -1,14 +1,13 @@
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';
-import { setAvailability } from '@/lib/users';
 import { tokenManager } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BottomTabBar } from '@react-navigation/bottom-tabs';
 import { Redirect, Tabs } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Image, Platform, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, Platform, Text, TouchableOpacity, View } from 'react-native';
 
 // CustomTabBar component for mode-based filtering
 type CustomTabBarProps = BottomTabBarProps & {
@@ -19,10 +18,10 @@ function CustomTabBar({ state, descriptors, navigation, mode, ...rest }: CustomT
 	// which route names should be visible for each mode
 	const visibleNames = useMemo(() => {
 		if (mode === "donor") {
-			return new Set(["home", "inbox", "donate", "history", "profile"]);
+			return new Set(["home", "inbox", "donate", "history", "chat", "notifications", "profile"]);
 		}
 		// patient (or default)
-		return new Set(["home", "donors", "request", "donate", "history", "profile"]);
+		return new Set(["home", "donors", "request", "donate", "history", "chat", "notifications", "profile"]);
 	}, [mode]);
 
 	// filter routes + descriptors
@@ -58,30 +57,32 @@ function CustomTabBar({ state, descriptors, navigation, mode, ...rest }: CustomT
 export default function TabLayout() {
 	const { theme } = useThemeCustom();
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [isAuthLoading, setIsAuthLoading] = useState(true);
 	const { mode, toggleMode } = useMode();
-	const [available, setAvailableLocal] = useState<boolean>(true);
 	
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
 				const token = await tokenManager.getAccessToken();
+				console.log('🔐 TabLayout auth check:', { hasToken: !!token, token: token?.substring(0, 20) + '...' });
 				setIsLoggedIn(!!token);
 			} catch (error) {
+				console.error('❌ TabLayout auth error:', error);
 				setIsLoggedIn(false);
+			} finally {
+				setIsAuthLoading(false);
 			}
 		};
 		checkAuth();
-		setAvailableLocal(true);
 	}, []);
-	const onToggleAvailability = async () => {
-		const next = !available;
-		setAvailableLocal(next);
-		try {
-			await setAvailability(next);
-		} catch {
-			setAvailableLocal(!next);
-		}
-	};
+	
+	console.log('📱 TabLayout render:', { isLoggedIn, isAuthLoading, mode, theme });
+	
+	// Show loading while checking auth
+	if (isAuthLoading) {
+		console.log('⏳ TabLayout: Still checking auth...');
+		return null; // or a loading spinner
+	}
 
 	// Get screen dimensions for responsive design
 	const { width: screenWidth } = Dimensions.get('window');
@@ -129,40 +130,10 @@ export default function TabLayout() {
 					</Text>
 				</TouchableOpacity>
 			)}
-			
-			{/* Availability Toggle - always visible for donors */}
-			{mode === 'donor' && (
-				<View style={{ 
-					flexDirection: 'row', 
-					alignItems: 'center',
-					backgroundColor: 'rgba(255, 255, 255, 0.1)',
-					paddingHorizontal: 8,
-					paddingVertical: 4,
-					borderRadius: 12,
-				}}>
-					<Text style={{ 
-						color: '#fff', 
-						fontSize: 12, 
-						fontWeight: '600', 
-						marginRight: 6 
-					}}>
-						Available
-					</Text>
-					<Switch 
-						value={available} 
-						onValueChange={onToggleAvailability}
-						trackColor={{ false: 'rgba(255, 255, 255, 0.3)', true: '#10B981' }}
-						thumbColor="#fff"
-						ios_backgroundColor="rgba(255, 255, 255, 0.3)"
-						style={{ 
-							transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] // Slightly smaller for compact design
-						}}
-					/>
-				</View>
-			)}
 		</View>
 	);
 	if (!isLoggedIn) {
+		console.log('🚫 Not logged in, redirecting to login');
 		return <Redirect href="/auth/login" />;
 	}
 	
@@ -256,6 +227,26 @@ export default function TabLayout() {
 						<Ionicons name="time" size={size ?? 24} color={color} />
 					),
 					tabBarLabel: 'History',
+				}}
+			/>
+			<Tabs.Screen
+				name="chat"
+				options={{
+					title: 'AI Chat',
+					tabBarIcon: ({ color, size }) => (
+						<Ionicons name="chatbubbles" size={size ?? 24} color={color} />
+					),
+					tabBarLabel: 'Chat',
+				}}
+			/>
+			<Tabs.Screen
+				name="notifications"
+				options={{
+					title: 'Notifications',
+					tabBarIcon: ({ color, size }) => (
+						<Ionicons name="notifications" size={size ?? 24} color={color} />
+					),
+					tabBarLabel: 'Alerts',
 				}}
 			/>
 			<Tabs.Screen

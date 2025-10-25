@@ -143,17 +143,14 @@ export default function DonorProfileScreen() {
           <View style={styles.contactActions}>
             <TouchableOpacity style={[styles.contactButton, { backgroundColor: '#10B981' }]} onPress={callDonor}>
               <Ionicons name="call" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>Call</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.contactButton, { backgroundColor: '#3B82F6' }]} onPress={sendSMS}>
               <Ionicons name="chatbubbles" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>SMS</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.contactButton, { backgroundColor: '#25D366' }]} onPress={openWhatsApp}>
               <Ionicons name="logo-whatsapp" size={20} color="#fff" />
-              <Text style={styles.contactButtonText}>WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </View>

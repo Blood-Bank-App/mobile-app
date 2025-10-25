@@ -54,11 +54,23 @@ export default function LoginScreen() {
 			const loginResponse = await AuthAPI.login(email.trim(), password);
 			const user = loginResponse.user;
 			
+			console.log('✅ Login successful:', { user, loginResponse });
+			
 			// Check if user needs onboarding based on the login response
 			const needsOnboarding = !user || !user.name || !user.bloodGroup || !user.city;
-			router.replace(needsOnboarding ? '/auth/onboarding' : '/(tabs)/home');
+			console.log('🔍 Onboarding check:', { 
+				needsOnboarding, 
+				hasName: !!user?.name, 
+				hasBloodGroup: !!user?.bloodGroup, 
+				hasCity: !!user?.city 
+			});
+			
+			const targetRoute = needsOnboarding ? '/auth/onboarding' : '/(tabs)/home';
+			console.log('🚀 Navigating to:', targetRoute);
+			
+			router.replace(targetRoute);
 		} catch (e: any) {
-			console.error('Login error:', e);
+			console.error('❌ Login error:', e);
 			Alert.alert('Login failed', getAuthErrorMessage(e));
 		} finally {
 			setIsLoading(false);

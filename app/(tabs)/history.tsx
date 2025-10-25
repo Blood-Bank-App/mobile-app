@@ -3,8 +3,9 @@ import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';
 import { listMyDonations } from '@/lib/donations';
 import { listMyRequests, listRequests } from '@/lib/requests';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type HistoryItem = {
   id: string;
@@ -20,9 +21,11 @@ export default function HistoryScreen() {
   const { mode } = useMode();
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'rejected' | 'accepted' | 'fulfilled' | 'cancelled'>('all');
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  const loadHistory = async () => {
+    try {
+      console.log('🔄 Loading history data...');
       if (mode === 'patient') {
         // Patient view: requests I posted by status
         const myRequests = await listMyRequests();
@@ -34,6 +37,7 @@ export default function HistoryScreen() {
           status: ((r.status === 'open' && 'Open') || (r.status === 'cancelled' && 'Cancelled') || (r.status === 'fulfilled' && 'Donated') || 'Pending') as HistoryItem['status'],
         })).sort((a, b) => b.date - a.date);
         setHistory(items);
+        console.log('✅ Patient history loaded:', items.length, 'items');
       } else {
         // Donor view: blood donations I recorded and accepted requests where I am requestedTo
         const [donations, acceptedRequests] = await Promise.all([
@@ -55,8 +59,21 @@ export default function HistoryScreen() {
           })),
         ].sort((a, b) => b.date - a.date);
         setHistory(items);
+        console.log('✅ Donor history loaded:', items.length, 'items');
       }
-    })();
+    } catch (error) {
+      console.error('❌ Failed to load history:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadHistory();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    loadHistory();
   }, [mode]);
 
   const filteredHistory = activeTab === 'all' ? history : history.filter((item) => {
@@ -72,9 +89,23 @@ export default function HistoryScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>
-        {mode === 'patient' ? 'Request History' : 'Donation History'}
-      </Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>
+          {mode === 'patient' ? 'Request History' : 'Donation History'}
+        </Text>
+        <TouchableOpacity 
+          style={[styles.refreshButton, { backgroundColor: Colors[theme].cardBackground }]}
+          onPress={onRefresh}
+          disabled={refreshing}
+        >
+          <Ionicons 
+            name="refresh" 
+            size={20} 
+            color={refreshing ? Colors[theme].secondaryText : Colors[theme].text}
+            style={refreshing ? styles.refreshing : undefined}
+          />
+        </TouchableOpacity>
+      </View>
       
       <View style={styles.tabs}>
         {(['all', 'pending', 'accepted', 'fulfilled', 'cancelled'] as const).map((tab) => (
@@ -94,6 +125,14 @@ export default function HistoryScreen() {
         data={filteredHistory}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors[theme].text}
+            colors={[Colors[theme].tint]}
+          />
+        }
         renderItem={({ item }) => (
           <View style={[styles.card, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]}>
             <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{new Date(item.date).toLocaleDateString()}</Text>
@@ -109,7 +148,22 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 16 
+  },
+  title: { fontSize: 24, fontWeight: '700' },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  refreshing: {
+    transform: [{ rotate: '180deg' }],
+  },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   tab: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 20, backgroundColor: '#F3F4F6' },
   tabActive: { backgroundColor: '#E11D48' },

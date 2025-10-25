@@ -15,8 +15,21 @@ export async function getUserProfile(uid?: string): Promise<UserProfile | null> 
   try {
     const profile = await UserAPI.getProfile();
     return profile;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting user profile:', error);
+    
+    // Handle specific error cases gracefully
+    if (error.response?.status === 403) {
+      console.log('User not authenticated or insufficient permissions');
+      return null;
+    }
+    
+    if (error.response?.status === 401) {
+      console.log('Authentication token expired or invalid');
+      return null;
+    }
+    
+    // For other errors, still return null but log the error
     return null;
   }
 }
@@ -37,9 +50,9 @@ export async function listAvailableDonors(filters?: {
 
 export async function listAllUsers(): Promise<UserProfile[]> {
   try {
-    // This would be an admin-only endpoint
-    // For now, return empty array as regular users can't list all users
-    return [];
+    // Use the available donors endpoint instead of admin-only list
+    const donors = await UserAPI.listAvailableDonors();
+    return donors;
   } catch (error) {
     console.error('Error listing all users:', error);
     return [];
@@ -57,8 +70,8 @@ export async function setAvailability(available: boolean): Promise<void> {
 
 export async function switchUserMode(mode: 'donor' | 'patient'): Promise<UserProfile> {
   try {
-    const updatedProfile = await UserAPI.switchMode(mode);
-    return updatedProfile;
+    const response = await UserAPI.switchMode(mode);
+    return response.data.data;
   } catch (error) {
     console.error('Error switching user mode:', error);
     throw error;

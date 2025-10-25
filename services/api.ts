@@ -45,20 +45,6 @@ api.interceptors.request.use(
   }
 );
 
-api.interceptors.response.use(
-  (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
-  (error) => {
-    console.error('❌ Response Error:', error.message);
-    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
-      console.error('🔌 Network Error - Check if backend server is running on:', API_BASE_URL);
-    }
-    return Promise.reject(error);
-  }
-);
-
 // Token management
 export const tokenManager = {
   async getAccessToken(): Promise<string | null> {
@@ -113,14 +99,23 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Combined response interceptor for logging, auth handling, and error management
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
   async (error) => {
+    console.error('❌ Response Error:', error.message);
+    
+    // Log network errors
+    if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      console.error('🔌 Network Error - Check if backend server is running on:', API_BASE_URL);
+    }
+
     const originalRequest = error.config;
 
+    // Handle 401 Unauthorized - try token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -141,9 +136,15 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, redirect to login
         await tokenManager.clearTokens();
-        // You might want to emit an event or use navigation here
         console.log('Token refresh failed, redirecting to login');
       }
+    }
+
+    // Handle 403 Forbidden - user not authenticated or insufficient permissions
+    if (error.response?.status === 403) {
+      console.log('403 Forbidden - User not authenticated or insufficient permissions');
+      // Don't crash the app, just reject with a clean error
+      return Promise.reject(new Error('Access denied. Please log in.'));
     }
 
     return Promise.reject(error);

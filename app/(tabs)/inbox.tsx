@@ -6,7 +6,7 @@ import { BloodRequest } from '@/lib/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function DonorInboxScreen() {
   const { theme } = useThemeCustom();
@@ -16,15 +16,24 @@ export default function DonorInboxScreen() {
   const [targeted, setTargeted] = useState<BloodRequest[]>([]);
   const [discoverable, setDiscoverable] = useState<BloodRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadInbox = async () => {
     try {
+      console.log('🔄 Loading inbox data...');
       const { targeted: t, discoverable: d } = await listDonorInbox();
       setTargeted(t);
       setDiscoverable(d);
+      console.log('✅ Inbox loaded:', { targeted: t.length, discoverable: d.length });
     } catch (e) {
-      console.error('Failed to load inbox', e);
+      console.error('❌ Failed to load inbox:', e);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadInbox();
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -70,7 +79,21 @@ export default function DonorInboxScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Text style={[styles.title, { color: Colors[theme].text }]}>Donor Inbox</Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: Colors[theme].text }]}>Donor Inbox</Text>
+        <TouchableOpacity 
+          style={[styles.refreshButton, { backgroundColor: Colors[theme].cardBackground }]}
+          onPress={onRefresh}
+          disabled={refreshing}
+        >
+          <Ionicons 
+            name="refresh" 
+            size={20} 
+            color={refreshing ? Colors[theme].secondaryText : Colors[theme].text}
+            style={refreshing ? styles.refreshing : undefined}
+          />
+        </TouchableOpacity>
+      </View>
       
       <View style={styles.tabs}>
         <TouchableOpacity 
@@ -95,6 +118,14 @@ export default function DonorInboxScreen() {
         data={currentData}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: 12, paddingVertical: 8 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors[theme].text}
+            colors={[Colors[theme].tint]}
+          />
+        }
         renderItem={({ item }) => (
           <View style={[styles.card, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]}>
             <Text style={[styles.patientName, { color: isDark ? '#fff' : '#111827' }]}>{item.patientName}</Text>
@@ -160,7 +191,22 @@ export default function DonorInboxScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 16 
+  },
+  title: { fontSize: 24, fontWeight: '700' },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  refreshing: {
+    transform: [{ rotate: '180deg' }],
+  },
   tabs: { flexDirection: 'row', marginBottom: 16, backgroundColor: '#F3F4F6', borderRadius: 8 },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   tabActive: { backgroundColor: '#E11D48', borderRadius: 8 },

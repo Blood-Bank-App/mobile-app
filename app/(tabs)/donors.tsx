@@ -5,7 +5,7 @@ import { listAllUsers } from '@/lib/users';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, Linking, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Linking, RefreshControl, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 type Donor = {
   id: string;
@@ -25,26 +25,43 @@ export default function DonorsScreen() {
   const [cityFilter, setCityFilter] = useState<string | 'all'>('all');
   const [onlyActive, setOnlyActive] = useState<boolean>(true);
   const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadDonors = async () => {
+    try {
+      console.log('🔄 Loading donors...');
+      setLoading(true);
+      const profiles = await listAllUsers();
+      setDonors(
+        profiles.map((p) => ({
+          id: p.uid,
+          name: p.name || '(No Name)',
+          bloodGroup: p.bloodGroup ?? '-',
+          city: p.city ?? '-',
+          gender: p.gender,
+          available: p.available,
+          phone: p.phone,
+        }))
+      );
+      console.log('✅ Donors loaded:', profiles.length, 'items');
+    } catch (e) {
+      console.error('❌ Failed to load donors:', e);
+      Alert.alert('Error', 'Failed to load donors. Please try again.');
+      setDonors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadDonors();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const profiles = await listAllUsers();
-        setDonors(
-          profiles.map((p) => ({
-            id: p.uid,
-            name: p.name || '(No Name)',
-            bloodGroup: p.bloodGroup ?? '-',
-            city: p.city ?? '-',
-            gender: p.gender,
-            available: p.available,
-            phone: p.phone,
-          }))
-        );
-      } catch (e) {
-        setDonors([]);
-      }
-    })();
+    loadDonors();
   }, []);
 
   const filtered = useMemo(() => {
@@ -90,7 +107,22 @@ export default function DonorsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
-      <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>Donors</Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>Find Donors</Text>
+        <TouchableOpacity 
+          style={[styles.refreshButton, { backgroundColor: Colors[theme].cardBackground }]}
+          onPress={onRefresh}
+          disabled={refreshing}
+        >
+          <Ionicons 
+            name="refresh" 
+            size={20} 
+            color={refreshing ? Colors[theme].secondaryText : Colors[theme].text}
+            style={refreshing ? styles.refreshing : undefined}
+          />
+        </TouchableOpacity>
+      </View>
+      
       <View style={styles.filters}>
         <TextInput placeholder="Search name/city/group" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.search, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={query} onChangeText={setQuery} />
         <FlatList
@@ -128,11 +160,26 @@ export default function DonorsScreen() {
           <Switch value={onlyActive} onValueChange={setOnlyActive} />
         </View>
       </View>
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
-        renderItem={({ item }) => (
+      
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E11D48" />
+          <Text style={[styles.loadingText, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>Loading donors...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors[theme].text}
+              colors={[Colors[theme].tint]}
+            />
+          }
+          renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Image source={require('@/assets/images/profile.png')} style={{ width: 36, height: 36, borderRadius: 18 }} />
@@ -161,35 +208,52 @@ export default function DonorsScreen() {
             </View>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
               <TouchableOpacity style={[styles.contactButton, { flex: 1 }]} onPress={() => openDial(item.phone)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <Ionicons name="call" size={16} color="#fff" />
-                  <Text style={styles.contactText}>Call</Text>
-                </View>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.contactButton, { flex: 1 }]} onPress={() => openSms(item.phone)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <Ionicons name="chatbubbles" size={16} color="#fff" />
-                  <Text style={styles.contactText}>SMS</Text>
-                </View>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.contactButton, { flex: 1 }]} onPress={() => openWhatsApp(item.phone)}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  <Ionicons name="logo-whatsapp" size={16} color="#fff" />
-                  <Text style={styles.contactText}>WhatsApp</Text>
-                </View>
+                <Ionicons name="logo-whatsapp" size={16} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No donors found. Try seeding or updating your profile to Available.</Text>}
-      />
+        ListEmptyComponent={<Text style={styles.empty}>No donors found. Try updating your profile to Available.</Text>}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 8 
+  },
   title: { fontSize: 24, fontWeight: '700' },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  refreshing: {
+    transform: [{ rotate: '180deg' }],
+  },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    gap: 16 
+  },
+  loadingText: { 
+    fontSize: 16, 
+    fontWeight: '500' 
+  },
   filters: { marginTop: 8, marginBottom: 8 },
   search: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 10, marginBottom: 8 },
   chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: '#e5e7eb' },

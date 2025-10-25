@@ -35,15 +35,19 @@ export default function NotFoundScreen() {
           <View style={styles.actions}>
             <Link href="/" asChild>
               <TouchableOpacity style={[styles.primaryButton, { backgroundColor: '#E11D48' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <Ionicons name="home" size={20} color="#fff" />
                 <Text style={styles.primaryButtonText}>Go to Home</Text>
+                </View>
               </TouchableOpacity>
             </Link>
 
             <Link href="/(tabs)/donors" asChild>
               <TouchableOpacity style={[styles.secondaryButton, { borderColor: isDark ? '#374151' : '#E5E7EB' }]}>
-                <Ionicons name="people" size={20} color={isDark ? '#D1D5DB' : '#6B7280'} />
-                <Text style={[styles.secondaryButtonText, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>Find Donors</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Ionicons name="people" size={20} color={isDark ? '#D1D5DB' : '#6B7280'} />
+                  <Text style={[styles.secondaryButtonText, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>Find Donors</Text>
+                </View>
               </TouchableOpacity>
             </Link>
           </View>

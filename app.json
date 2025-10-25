@@ -33,14 +33,22 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "com.upgrade53.bloodbank",
+          "enableGooglePay": true
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "stripePublishableKey": "pk_test_51RyataPGd9QijKjn1JQ1iGVOYE09NW9zK0IkTp9MXYvI5ofuudKRTAbZOOpOWiQh2K0V8ESXYZgaaKUkgPoPYm0K00vuWJ1t1Q",
-      "backendUrl": "https://bloodbank-backend.farjad8585.workers.dev"
+      "stripePublishableKey": "pk_test_51PzfJqDLnthAVUMtvsLTh62plknX4r4wwVvykXKPkDaJbrDwtw3WUVsCctHfMfuioffOfdkwuleRPRI3ZsqNlPuz00HPUZ6h5f",
+      "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51PzfJqDLnthAVUMtvsLTh62plknX4r4wwVvykXKPkDaJbrDwtw3WUVsCctHfMfuioffOfdkwuleRPRI3ZsqNlPuz00HPUZ6h5f",
+      "backendUrl": "https://backend-python-backendproduction.up.railway.app/api"
     }
   }
 }

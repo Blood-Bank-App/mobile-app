@@ -3,6 +3,7 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
 import { Image, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
@@ -10,6 +11,30 @@ import { STRIPE_CONFIG } from '@/config/stripe';
 import { Colors } from '@/constants/Colors';
 import { ModeProvider } from '@/context/ModeContext';
 import { ThemeProviderCustom, useThemeCustom } from '@/context/ThemeContext';
+
+// Global error handler to prevent unhandled promise rejections from crashing the app
+if (typeof global !== 'undefined') {
+  global.addEventListener = global.addEventListener || function() {};
+  global.removeEventListener = global.removeEventListener || function() {};
+}
+
+// Handle unhandled promise rejections
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    console.warn('Unhandled promise rejection:', event.reason);
+    // Prevent the default behavior (crashing the app)
+    event.preventDefault();
+  });
+}
+
+// Handle uncaught errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    console.warn('Uncaught error:', event.error);
+    // Prevent the default behavior (crashing the app)
+    event.preventDefault();
+  });
+}
 
 function RootLayoutInner() {
   const { theme } = useThemeCustom();
@@ -51,7 +76,11 @@ function RootLayoutInner() {
 
   return (
     <ThemeProvider value={theme === 'dark' ? customDarkTheme : customLightTheme}>
-      <StripeProvider publishableKey={STRIPE_CONFIG.publishableKey}>
+      <StripeProvider 
+        publishableKey={STRIPE_CONFIG.publishableKey}
+        urlScheme="upgrade53"
+        merchantIdentifier="com.upgrade53.bloodbank"
+      >
       <Stack screenOptions={{
         headerTitle: () => (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

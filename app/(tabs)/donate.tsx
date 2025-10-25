@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
-import { createStripePaymentIntent, recordMoneyDonation } from '@/lib/donations';
+import { recordMoneyDonation } from '@/lib/donations';
+import { DonationAPI } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Link } from 'expo-router';
@@ -52,42 +53,57 @@ export default function DonateScreen() {
     try {
       setLoading(true);
       
-      // Create payment intent via Node.js backend
-      const clientSecret = await createStripePaymentIntent({
-        amount,
-        currency: 'PKR',
-        purpose,
+      console.log('💰 Creating payment intent for amount:', amount, 'PKR');
+      
+      // Create payment intent via backend
+      const paymentIntent = await DonationAPI.createPaymentIntent(amount, 'PKR', purpose);
+      console.log('✅ Payment intent created:', { 
+        id: paymentIntent.id, 
+        clientSecret: paymentIntent.client_secret?.substring(0, 20) + '...',
+        status: paymentIntent.status,
+        fullResponse: paymentIntent
       });
       
+      if (!paymentIntent.client_secret) {
+        throw new Error('Payment intent missing client secret');
+      }
+      
       // Initialize payment sheet with Stripe SDK
+      console.log('🔧 Initializing payment sheet with client secret:', paymentIntent.client_secret?.substring(0, 20) + '...');
       const { error: initError } = await initPaymentSheet({
-        paymentIntentClientSecret: clientSecret,
+        paymentIntentClientSecret: paymentIntent.client_secret,
         merchantDisplayName: 'Blood Bank',
         allowsDelayedPaymentMethods: true,
       });
 
       if (initError) {
-        throw new Error(initError.message);
+        console.error('❌ Payment sheet init error:', initError);
+        console.error('❌ Full init error details:', JSON.stringify(initError, null, 2));
+        throw new Error(`Payment initialization failed: ${initError.message}`);
       }
 
+      console.log('✅ Payment sheet initialized, presenting...');
       // Present payment sheet
       const { error: presentError } = await presentPaymentSheet();
 
       if (presentError) {
+        console.error('❌ Payment sheet present error:', presentError);
         if (presentError.code === 'Canceled') {
           // User canceled - no error needed
+          console.log('🚫 User canceled payment');
           return;
         }
-        throw new Error(presentError.message);
+        throw new Error(`Payment failed: ${presentError.message}`);
       }
 
+      console.log('✅ Payment completed successfully!');
       // Payment succeeded - record the donation
       try {
         await recordMoneyDonation({
           amount,
           currency: 'PKR',
           purpose,
-          stripePaymentId: 'stripe_payment_' + Date.now(), // Placeholder since we don't have the actual payment ID
+          stripePaymentId: paymentIntent.id, // Use the actual payment intent ID
         });
         
         Alert.alert('Success', 'Thank you for your donation! A receipt has been sent to your email.');
@@ -230,14 +246,16 @@ export default function DonateScreen() {
           </Text>
         </TouchableOpacity>
 
-        <Link href="/donations" asChild>
-          <TouchableOpacity style={[styles.historyButton, { borderColor: isDark ? '#374151' : '#D1D5DB' }]}>
+        <Link href={{ pathname: '/donations' }} asChild>
+        <TouchableOpacity style={[styles.historyButton, { borderColor: isDark ? '#374151' : '#D1D5DB' }]}> 
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <Ionicons name="time" size={20} color={Colors[theme].text} />
             <Text style={[styles.historyButtonText, { color: Colors[theme].text }]}>
               View Donation History
             </Text>
-          </TouchableOpacity>
-        </Link>
+          </View>
+        </TouchableOpacity>
+      </Link>
       </View>
 
       {/* Information */}
