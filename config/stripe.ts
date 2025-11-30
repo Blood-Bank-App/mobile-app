@@ -19,9 +19,9 @@ export const STRIPE_CONFIG = {
                   'pk_test_your_stripe_publishable_key_here',
   
   // Backend URL for server-side operations
-  backendUrl: Constants.expoConfig?.extra?.backendUrl || 
+  backendUrl: Constants.expoConfig?.extra?.backendUrl as string | undefined || 
               process.env.EXPO_PUBLIC_BACKEND_URL || 
-              'http://localhost:3000',
+              'https://c11e44b3e839.ngrok-free.app/api',
   
   // API Version
   apiVersion: '2023-10-16' as const,

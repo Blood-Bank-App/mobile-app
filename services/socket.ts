@@ -1,8 +1,25 @@
+import Constants from 'expo-constants';
 import { io, Socket } from 'socket.io-client';
 import { tokenManager } from './api';
 
 // Socket.IO Configuration
-const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhost:8000';
+const getSocketUrl = () => {
+  // Try to get from Constants first (from app.json extra section)
+  const configUrl = Constants.expoConfig?.extra?.socketUrl as string | undefined;
+  if (configUrl) return configUrl;
+  
+  // Fallback to environment variable
+  const envUrl = process.env.EXPO_PUBLIC_SOCKET_URL;
+  if (envUrl) return envUrl;
+  
+  // Default fallback
+  return 'http://localhost:8000';
+};
+
+const SOCKET_URL = getSocketUrl();
+
+// Debug logging
+console.log('🔌 Socket URL:', SOCKET_URL);
 
 class SocketService {
   private socket: Socket | null = null;

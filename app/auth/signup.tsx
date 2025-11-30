@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
+import { userManager } from '@/hooks/userManager';
 import { AuthAPI } from '@/services/api';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -7,6 +8,7 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SignupScreen() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
@@ -14,7 +16,15 @@ export default function SignupScreen() {
 
   const signup = async () => {
     try {
-      await AuthAPI.register(email.trim(), password);
+      const payload = {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      };
+
+      const { user } = await AuthAPI.register(payload);
+      await userManager.setUser(user);
+
       Alert.alert('Account created', 'Let\'s complete your profile.');
       router.replace('/auth/onboarding');
     } catch (e: any) {
@@ -29,6 +39,21 @@ export default function SignupScreen() {
       <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: '700', marginBottom: 12, color: Colors[theme].text }}>Blood Donation App</Text>
       <View style={[styles.card, { backgroundColor: Colors[theme].cardBackground, borderColor: Colors[theme].border }]}>
         <Text style={[styles.title, { color: Colors[theme].text }]}>Create account</Text>
+        <TextInput
+            placeholder="Name"
+            placeholderTextColor={Colors[theme].secondaryText}
+            value={name}
+            onChangeText={setName}
+            style={[
+              styles.input,
+              {
+                color: Colors[theme].text,
+                backgroundColor: Colors[theme].inputBackground,
+                borderColor: Colors[theme].border,
+              },
+            ]}
+          />
+
         <TextInput 
           placeholder="Email" 
           placeholderTextColor={Colors[theme].secondaryText}

@@ -1,11 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import Constants from 'expo-constants';
 
 // API Configuration
-// For mobile development, use your computer's IP address instead of localhost
-// Your computer's IP: 192.168.100.3
-// This will work for both web (localhost) and mobile (IP address)
 const getApiBaseUrl = () => {
+  // Try to get from Constants first (from app.json extra section)
+  const configUrl = Constants.expoConfig?.extra?.apiBaseUrl as string | undefined;
+  if (configUrl) return configUrl;
+  
+  // Fallback to environment variable
   const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
   if (envUrl) return envUrl;
   
@@ -18,6 +21,7 @@ const API_BASE_URL = getApiBaseUrl();
 
 // Debug: Log the API URL being used
 console.log('🔗 API Base URL:', API_BASE_URL);
+console.log('📱 Expo Config:', Constants.expoConfig?.extra);
 console.log('🌐 Environment:', typeof window !== 'undefined' ? 'Web' : 'Mobile');
 
 // Token storage keys

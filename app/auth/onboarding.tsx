@@ -2,6 +2,7 @@ import SelectModal from '@/components/SelectModal';
 import { Colors } from '@/constants/Colors';
 import { BLOOD_GROUPS, CITIES_PK, GENDERS } from '@/data/pk';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { userManager } from '@/hooks/userManager';
 import { saveUserProfile } from '@/lib/users';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -11,7 +12,7 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacit
 export default function OnboardingScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
-  const isDark = colorScheme === 'dark';
+  // const isDark = colorScheme === 'dark';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('+92');
@@ -44,10 +45,18 @@ export default function OnboardingScreen() {
   };
 
   useEffect(() => {
-    // Get current user email from stored profile or token
-    // This will be handled by the API service
-    setEmail(''); // Will be populated from the API
+    const loadUser = async () => {
+      const savedUser = await userManager.getUser(); // Load from storage
+
+      if (savedUser) {
+        setName(savedUser.name || '');
+        setEmail(savedUser.email || '');
+      }
+    };
+
+    loadUser();
   }, []);
+
 
   return (
     <ScrollView 
@@ -75,6 +84,7 @@ export default function OnboardingScreen() {
           value={email} 
           onChangeText={setEmail} 
           editable={false} 
+          selectTextOnFocus={false}
         />
         
         <TextInput 
