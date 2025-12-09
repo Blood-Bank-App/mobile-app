@@ -58,11 +58,11 @@ export default function DonateScreen() {
       // Create payment intent via backend
       const paymentIntent = await DonationAPI.createPaymentIntent(amount, 'PKR', purpose);
       console.log('✅ Payment intent created:', { 
-        id: paymentIntent.id, 
+        id: paymentIntent.payment_intent_id,
         clientSecret: paymentIntent.client_secret?.substring(0, 20) + '...',
-        status: paymentIntent.status,
         fullResponse: paymentIntent
       });
+      
       
       if (!paymentIntent.client_secret) {
         throw new Error('Payment intent missing client secret');
@@ -103,7 +103,7 @@ export default function DonateScreen() {
           amount,
           currency: 'PKR',
           purpose,
-          stripePaymentId: paymentIntent.id, // Use the actual payment intent ID
+          stripePaymentId: paymentIntent.payment_intent_id, // Use the actual payment intent ID
         });
         
         Alert.alert('Success', 'Thank you for your donation! A receipt has been sent to your email.');

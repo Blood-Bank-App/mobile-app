@@ -28,7 +28,13 @@ export default function SignupScreen() {
       Alert.alert('Account created', 'Let\'s complete your profile.');
       router.replace('/auth/onboarding');
     } catch (e: any) {
-      const errorMessage = e.response?.data?.error || e.message || 'Try again';
+      const errorMessage =
+                e.response?.data?.detail ||
+                e.response?.data?.message ||
+                e.response?.data?.error ||
+                e.message ||
+                'Try again';
+
       Alert.alert('Sign up failed', errorMessage);
     }
   };

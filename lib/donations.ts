@@ -40,12 +40,12 @@ export async function createStripePaymentIntent({
 export async function recordMoneyDonation(data: Omit<MoneyDonation, 'id' | 'createdAt' | 'uid'> & { 
   amount: number; 
   currency?: string;
-  stripePaymentId?: string;
+  stripePaymentId: string;
   stripeSessionId?: string;
 }): Promise<string> {
   try {
     const donation = await DonationAPI.confirmMoneyDonation(
-      data.stripePaymentId || '',
+      data.stripePaymentId,
       data.amount,
       data.currency || 'PKR',
       data.purpose

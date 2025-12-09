@@ -24,6 +24,7 @@ export default function PatientProfileScreen() {
   useEffect(() => {
     (async () => {
       const p = await getUserProfile();
+      console.log(p, "......");
       if (p) {
         setName(p.name ?? '');
         setGroup(p.bloodGroup);

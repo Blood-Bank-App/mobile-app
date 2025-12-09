@@ -36,6 +36,8 @@ export default function ProfileScreen() {
 	useEffect(() => {
 		(async () => {
 			const profile = await getUserProfile();
+			console.log('PROFILE FROM API:', JSON.stringify(profile, null, 2));
+
 			if (profile) {
 				setName(profile.name ?? '');
 				setEmail(profile.email ?? '');
@@ -146,7 +148,7 @@ export default function ProfileScreen() {
 					</View>
 				)}
 
-				<View style={[styles.settingRow, { borderBottomColor: isDark ? '#374151' : '#e5e7eb' }]}>
+				{/* <View style={[styles.settingRow, { borderBottomColor: isDark ? '#374151' : '#e5e7eb' }]}>
 					<View style={styles.settingInfo}>
 						<Ionicons name="person-circle" size={20} color="#E11D48" />
 						<View>
@@ -157,7 +159,7 @@ export default function ProfileScreen() {
 					<TouchableOpacity onPress={toggleMode} style={[styles.modeButton, { backgroundColor: mode === 'donor' ? '#10B981' : '#3B82F6' }]}>
 						<Text style={styles.modeButtonText}>{mode === 'donor' ? 'Donor' : 'Patient'}</Text>
 					</TouchableOpacity>
-				</View>
+				</View> */}
 
 				<TouchableOpacity style={[styles.settingRow, { borderBottomColor: isDark ? '#374151' : '#e5e7eb' }]} onPress={() => setOpenPicker('theme')}>
 					<View style={styles.settingInfo}>
