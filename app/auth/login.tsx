@@ -1,5 +1,6 @@
 import { Colors } from '@/constants/Colors';
 import { useThemeCustom } from '@/context/ThemeContext';
+import { useMode } from '@/context/ModeContext';
 import { AuthAPI } from '@/services/api';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -9,6 +10,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity
 export default function LoginScreen() {
 	const router = useRouter();
 	const { theme } = useThemeCustom();
+	const { refreshMode } = useMode();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +56,13 @@ export default function LoginScreen() {
 			const loginResponse = await AuthAPI.login(email.trim(), password);
 			const user = loginResponse.user;
 			
-			console.log('✅ Login successful:', { user, loginResponse });
+			console.log('✅ Login successful:', { user, loginResponse, mode: user?.mode });
+			
+			// Refresh mode from user profile after login
+			if (user?.mode) {
+				await refreshMode();
+				console.log('✅ Mode refreshed after login:', user.mode);
+			}
 			
 			// Check if user needs onboarding based on the login response
 			const needsOnboarding = !user || !user.name || !user.bloodGroup || !user.city;

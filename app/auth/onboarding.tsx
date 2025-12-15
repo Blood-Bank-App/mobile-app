@@ -1,5 +1,6 @@
 import SelectModal from '@/components/SelectModal';
 import { Colors } from '@/constants/Colors';
+import { useMode } from '@/context/ModeContext';
 import { BLOOD_GROUPS, CITIES_PK, GENDERS } from '@/data/pk';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { userManager } from '@/hooks/userManager';
@@ -12,6 +13,7 @@ import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacit
 export default function OnboardingScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
+  const { setMode: setContextMode, refreshMode } = useMode();
   // const isDark = colorScheme === 'dark';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,8 +37,28 @@ export default function OnboardingScreen() {
       return;
     }
     try {
-      await saveUserProfile({ name, email, phone, gender, bloodGroup, city, mode, available: mode === 'donor' ? available : undefined });
+      // Save profile with mode
+      const updatedProfile = await saveUserProfile({ 
+        name, 
+        email, 
+        phone, 
+        gender, 
+        bloodGroup, 
+        city, 
+        mode, 
+        available: mode === 'donor' ? available : undefined 
+      });
+      
+      // Get the actual mode from the saved profile (in case backend modified it)
+      const savedMode = (updatedProfile?.mode || mode) as 'donor' | 'patient';
+      
+      // Update ModeContext with the saved mode immediately
+      await setContextMode(savedMode);
+      
+      console.log('✅ Onboarding complete, mode set to:', savedMode);
       Alert.alert('Saved', 'Welcome!');
+      
+      // Navigate after mode is set
       router.replace('/(tabs)/home');
     } catch (e: any) {
       const message = e?.message ?? 'Could not save profile. Are you logged in?';

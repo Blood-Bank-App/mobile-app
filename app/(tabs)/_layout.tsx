@@ -58,29 +58,40 @@ export default function TabLayout() {
 	const { theme } = useThemeCustom();
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [isAuthLoading, setIsAuthLoading] = useState(true);
-	const { mode, toggleMode } = useMode();
+	const { mode, toggleMode, isLoading: isModeLoading } = useMode();
 	
 	useEffect(() => {
+		let isMounted = true;
 		const checkAuth = async () => {
 			try {
 				const token = await tokenManager.getAccessToken();
 				console.log('🔐 TabLayout auth check:', { hasToken: !!token, token: token?.substring(0, 20) + '...' });
+				if (!isMounted) return;
 				setIsLoggedIn(!!token);
+				// Note: ModeProvider already loads mode on mount, and login/onboarding screens
+				// call refreshMode after authentication, so we don't need to refresh here
 			} catch (error) {
 				console.error('❌ TabLayout auth error:', error);
-				setIsLoggedIn(false);
+				if (isMounted) {
+					setIsLoggedIn(false);
+				}
 			} finally {
-				setIsAuthLoading(false);
+				if (isMounted) {
+					setIsAuthLoading(false);
+				}
 			}
 		};
 		checkAuth();
-	}, []);
+		return () => {
+			isMounted = false;
+		};
+	}, []); // Only run once on mount
 	
-	console.log('📱 TabLayout render:', { isLoggedIn, isAuthLoading, mode, theme });
+	console.log('📱 TabLayout render:', { isLoggedIn, isAuthLoading, isModeLoading, mode, theme });
 	
-	// Show loading while checking auth
-	if (isAuthLoading) {
-		console.log('⏳ TabLayout: Still checking auth...');
+	// Show loading while checking auth or loading mode
+	if (isAuthLoading || isModeLoading) {
+		console.log('⏳ TabLayout: Still loading (auth or mode)...');
 		return null; // or a loading spinner
 	}
 
@@ -239,7 +250,7 @@ export default function TabLayout() {
 					tabBarLabel: 'Chat',
 				}}
 			/>
-			<Tabs.Screen
+			{/* <Tabs.Screen
 				name="notifications"
 				options={{
 					title: 'Notifications',
@@ -248,7 +259,7 @@ export default function TabLayout() {
 					),
 					tabBarLabel: 'Alerts',
 				}}
-			/>
+			/> */}
 			<Tabs.Screen
 				name="profile"
 				options={{
