@@ -1,16 +1,16 @@
-import { initializeApp, FirebaseApp, FirebaseOptions } from 'firebase/app';
-import { getDatabase, Database } from 'firebase/database';
-import { initializeAuth, getReactNativePersistence, Auth } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FirebaseApp, FirebaseOptions, initializeApp } from 'firebase/app';
+import { Auth, initializeAuth } from 'firebase/auth';
+import { Database, getDatabase } from 'firebase/database';
 
-const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyDBKr5eE4TV-uget7xQsUko5UxzXJ1M66Y",
-  authDomain: "bloodbank-50357.firebaseapp.com",
-  projectId: "bloodbank-50357",
-  storageBucket: "bloodbank-50357.firebasestorage.app",
-  messagingSenderId: "573555262048",
-  appId: "1:573555262048:web:a8c4b8231c3c52c17e7905",
-  measurementId: "G-4NYETVY0NJ"
+export const firebaseConfig: FirebaseOptions = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_APIKEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 
@@ -27,3 +27,4 @@ const auth: Auth = initializeAuth(app);
 const database: Database = getDatabase(app);
 
 export { app, auth, database };
+
