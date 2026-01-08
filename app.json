@@ -2,7 +2,7 @@
   "expo": {
     "name": "bloodbankapp",
     "slug": "bloodbankapp",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bloodbankapp",
@@ -49,8 +49,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "https://backend-python-backendproduction.up.railway.app/api",
-      "socketUrl": "https://backend-python-backendproduction.up.railway.app",
+      "apiBaseUrl": "https://d4bb7bd7985e.ngrok-free.app/api",
+      "socketUrl": "https://d4bb7bd7985e.ngrok-free.app",
       "stripePublishableKey": "pk_test_51PzfJqDLnthAVUMtvsLTh62plknX4r4wwVvykXKPkDaJbrDwtw3WUVsCctHfMfuioffOfdkwuleRPRI3ZsqNlPuz00HPUZ6h5f",
       "router": {},
       "eas": {

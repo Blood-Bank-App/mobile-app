@@ -58,13 +58,26 @@ export default function ChatScreen() {
       setLoading(true);
       const sessionsData = await ChatAPI.listSessions();
       console.log('📊 Sessions data:', sessionsData);
-      setSessions(sessionsData);
-      console.log('✅ Chat sessions loaded:', sessionsData.length, 'sessions');
       
-      // Auto-select first session if none selected
-      if (sessionsData.length > 0 && !currentSession) {
-        console.log('🎯 Auto-selecting first session:', sessionsData[0].id);
-        setCurrentSession(sessionsData[0]);
+      // Sort sessions by updatedAt (most recent first)
+      const sortedSessions = [...sessionsData].sort((a, b) => {
+        const timeA = typeof a.updatedAt === 'string' ? new Date(a.updatedAt).getTime() : (a.updatedAt || 0);
+        const timeB = typeof b.updatedAt === 'string' ? new Date(b.updatedAt).getTime() : (b.updatedAt || 0);
+        return timeB - timeA; // Most recent first
+      });
+      
+      setSessions(sortedSessions);
+      console.log('✅ Chat sessions loaded:', sortedSessions.length, 'sessions');
+      
+      // Auto-select most recent session if none selected or if current session is not in the list
+      if (sortedSessions.length > 0) {
+        const currentSessionId = currentSession?.id;
+        const sessionStillExists = currentSessionId && sortedSessions.some(s => s.id === currentSessionId);
+        
+        if (!currentSession || !sessionStillExists) {
+          console.log('🎯 Auto-selecting most recent session:', sortedSessions[0].id);
+          setCurrentSession(sortedSessions[0]);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to load chat sessions:', error);
@@ -106,6 +119,7 @@ export default function ChatScreen() {
     try {
       console.log('🔄 Creating new chat session...');
       const newSession = await ChatAPI.createSession();
+      // Add new session to the beginning of the list
       setSessions(prev => [newSession, ...prev]);
       setCurrentSession(newSession);
       setMessages([]);
@@ -113,6 +127,8 @@ export default function ChatScreen() {
     } catch (error) {
       console.error('❌ Failed to create session:', error);
       Alert.alert('Error', 'Failed to create new chat session');
+      // Reload sessions to ensure we have the latest list
+      await loadSessions();
     }
   };
 
@@ -145,6 +161,9 @@ export default function ChatScreen() {
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Refresh sessions to update the updatedAt timestamp
+      await loadSessions();
       
       console.log('✅ Message sent successfully');
     } catch (error) {
@@ -193,46 +212,63 @@ export default function ChatScreen() {
     );
   };
 
-  const renderSession = ({ item }: { item: ChatSession }) => (
-    <TouchableOpacity
-      style={[
-        styles.sessionItem,
-        { 
-          backgroundColor: currentSession?.id === item.id 
-            ? '#E11D48' 
-            : isDark ? '#111827' : '#fff',
-          borderColor: isDark ? '#374151' : '#e5e7eb'
-        }
-      ]}
-      onPress={() => setCurrentSession(item)}
-    >
-      <View style={styles.sessionIcon}>
-        <Ionicons 
-          name="chatbubble" 
-          size={20} 
-          color={currentSession?.id === item.id ? '#fff' : '#E11D48'} 
-        />
-      </View>
-      <View style={styles.sessionInfo}>
-        <Text style={[
-          styles.sessionTitle,
+  const renderSession = ({ item }: { item: ChatSession }) => {
+    const isActive = currentSession?.id === item.id;
+    const createdAt = typeof item.createdAt === 'string' ? new Date(item.createdAt) : new Date(item.createdAt || Date.now());
+    const updatedAt = typeof item.updatedAt === 'string' ? new Date(item.updatedAt) : new Date(item.updatedAt || item.createdAt || Date.now());
+    const isToday = updatedAt.toDateString() === new Date().toDateString();
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.sessionItem,
           { 
-            color: currentSession?.id === item.id 
-              ? '#fff' 
-              : isDark ? '#fff' : '#111827'
+            backgroundColor: isActive 
+              ? '#E11D48' 
+              : isDark ? '#111827' : '#fff',
+            borderColor: isActive 
+              ? '#E11D48' 
+              : isDark ? '#374151' : '#e5e7eb',
+            borderWidth: isActive ? 2 : 1
           }
-        ]}>
-          AI Chat Session
-        </Text>
-        <Text style={[
-          styles.sessionTime,
-          { color: isDark ? '#9CA3AF' : '#6B7280' }
-        ]}>
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+        ]}
+        onPress={() => setCurrentSession(item)}
+      >
+        <View style={styles.sessionIcon}>
+          <Ionicons 
+            name={isActive ? "chatbubble" : "chatbubble-outline"} 
+            size={20} 
+            color={isActive ? '#fff' : '#E11D48'} 
+          />
+        </View>
+        <View style={styles.sessionInfo}>
+          <Text style={[
+            styles.sessionTitle,
+            { 
+              color: isActive 
+                ? '#fff' 
+                : isDark ? '#fff' : '#111827'
+            }
+          ]}>
+            Chat Session
+          </Text>
+          <Text style={[
+            styles.sessionTime,
+            { 
+              color: isActive 
+                ? 'rgba(255,255,255,0.8)' 
+                : isDark ? '#9CA3AF' : '#6B7280'
+            }
+          ]}>
+            {isToday 
+              ? `Today ${updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : updatedAt.toLocaleDateString([], { month: 'short', day: 'numeric' })
+            }
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: Colors[theme].background }]}>
@@ -240,28 +276,47 @@ export default function ChatScreen() {
         <Text style={[styles.title, { color: isDark ? '#fff' : Colors[theme].text }]}>
           AI Chat Support
         </Text>
-        <TouchableOpacity 
-          style={[styles.newChatButton, { backgroundColor: '#E11D48' }]}
-          onPress={createNewSession}
-        >
-          <Ionicons name="add" size={20} color="#fff" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity 
+            style={[styles.newChatButton, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
+            onPress={loadSessions}
+            disabled={loading}
+          >
+            <Ionicons name="refresh" size={20} color={isDark ? '#fff' : '#111827'} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.newChatButton, { backgroundColor: '#E11D48' }]}
+            onPress={createNewSession}
+          >
+            <Ionicons name="add" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.content}>
         {/* Sessions List */}
         <View style={styles.sessionsContainer}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : Colors[theme].text }]}>
-            Chat Sessions
-          </Text>
-          <FlatList
-            data={sessions}
-            keyExtractor={(item) => item.id}
-            renderItem={renderSession}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-          />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
+            <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : Colors[theme].text }]}>
+              Chat Sessions {sessions.length > 0 && `(${sessions.length})`}
+            </Text>
+          </View>
+          {sessions.length === 0 ? (
+            <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+              <Text style={[styles.emptySessionsText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>
+                No previous sessions. Create a new one to start chatting!
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={sessions}
+              keyExtractor={(item) => item.id}
+              renderItem={renderSession}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+            />
+          )}
         </View>
 
         {/* Messages */}
@@ -386,7 +441,9 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    minWidth: 36,
+    minHeight: 36
   },
   content: { flex: 1 },
   sessionsContainer: { 
@@ -470,5 +527,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16
   },
-  noSessionText: { fontSize: 16, textAlign: 'center' }
+  noSessionText: { fontSize: 16, textAlign: 'center' },
+  emptySessionsText: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic'
+  }
 });

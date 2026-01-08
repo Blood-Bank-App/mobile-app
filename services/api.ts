@@ -250,6 +250,11 @@ export class UserAPI {
     const response = await api.get('/users/stats');
     return response.data.data;
   }
+
+  static async getUserById(userId: string) {
+    const response = await api.get(`/users/${userId}`);
+    return response.data.data;
+  }
 }
 
 export class RequestAPI {
@@ -278,6 +283,7 @@ export class RequestAPI {
     mineOnly?: boolean;
     toMeOnly?: boolean;
     openOnly?: boolean;
+    includeMatchScores?: boolean;
     skip?: number;
     limit?: number;
   }) {

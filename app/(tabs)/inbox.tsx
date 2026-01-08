@@ -1,7 +1,7 @@
 import { Colors } from '@/constants/Colors';
 import { useMode } from '@/context/ModeContext';
 import { useThemeCustom } from '@/context/ThemeContext';
-import { acceptRequest, listDonorInbox, rejectRequest } from '@/lib/requests';
+import { acceptRequest, listDonorInbox, listRequests, rejectRequest } from '@/lib/requests';
 import { BloodRequest } from '@/lib/types';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
@@ -22,9 +22,25 @@ export default function DonorInboxScreen() {
     try {
       console.log('🔄 Loading inbox data...');
       const { targeted: t, discoverable: d } = await listDonorInbox();
+      
+      // Load discoverable requests with match scores
+      const discoverableWithScores = await listRequests({ 
+        openOnly: true, 
+        includeMatchScores: true 
+      });
+      
+      // Merge and sort by match score
+      const sortedDiscoverable = [...d, ...discoverableWithScores]
+        .filter((req, index, self) => index === self.findIndex(r => r.id === req.id))
+        .sort((a, b) => {
+          const scoreA = a.matchScore?.matchScore ?? 0;
+          const scoreB = b.matchScore?.matchScore ?? 0;
+          return scoreB - scoreA;
+        });
+      
       setTargeted(t);
-      setDiscoverable(d);
-      console.log('✅ Inbox loaded:', { targeted: t.length, discoverable: d.length });
+      setDiscoverable(sortedDiscoverable);
+      console.log('✅ Inbox loaded:', { targeted: t.length, discoverable: sortedDiscoverable.length });
     } catch (e) {
       console.error('❌ Failed to load inbox:', e);
     }
@@ -128,12 +144,27 @@ export default function DonorInboxScreen() {
         }
         renderItem={({ item }) => (
           <View style={[styles.card, { borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]}>
-            <Text style={[styles.patientName, { color: isDark ? '#fff' : '#111827' }]}>{item.patientName}</Text>
-            <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>
-              {item.requiredBloodGroup} • {item.city} • {item.gender}
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.patientName, { color: isDark ? '#fff' : '#111827' }]}>{item.patientName}</Text>
+                <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>
+                  {item.requiredBloodGroup} • {item.city} • {item.gender}
+                </Text>
+              </View>
+              {item.matchScore && (
+                <View style={[styles.matchScoreBadge, { backgroundColor: item.matchScore.matchScore >= 70 ? '#10B981' : item.matchScore.matchScore >= 50 ? '#F59E0B' : '#EF4444' }]}>
+                  <Text style={styles.matchScoreText}>{Math.round(item.matchScore.matchScore)}%</Text>
+                  <Text style={styles.matchScoreLabel}>Match</Text>
+                </View>
+              )}
+            </View>
             {item.hospital && <Text style={[styles.meta, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{item.hospital}</Text>}
             {item.notes && <Text style={[styles.notes, { color: isDark ? '#D1D5DB' : '#6B7280' }]}>{item.notes}</Text>}
+            {item.matchScore && item.matchScore.distanceKm !== undefined && (
+              <Text style={[styles.meta, { color: isDark ? '#9CA3AF' : '#6B7280', fontSize: 12 }]}>
+                📍 {item.matchScore.distanceKm.toFixed(1)} km away
+              </Text>
+            )}
             <Text style={[styles.time, { color: isDark ? '#9CA3AF' : '#9CA3AF' }]}>
               {new Date(item.createdAt).toLocaleString()}
             </Text>
@@ -228,4 +259,21 @@ const styles = StyleSheet.create({
   },
   actionText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   empty: { textAlign: 'center', marginTop: 32, fontSize: 16 },
+  matchScoreBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  matchScoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  matchScoreLabel: {
+    color: '#fff',
+    fontSize: 10,
+    opacity: 0.9,
+  },
 });

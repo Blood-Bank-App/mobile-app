@@ -4,9 +4,11 @@ import { useThemeCustom } from '@/context/ThemeContext';
 import { BLOOD_GROUPS, CITIES_PK, GENDERS } from '@/data/pk';
 import { postRequest } from '@/lib/requests';
 import { getUserProfile } from '@/lib/users';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function RequestBloodScreen() {
 	const { theme } = useThemeCustom();
@@ -20,7 +22,21 @@ export default function RequestBloodScreen() {
 	const [units, setUnits] = useState('');
 	const [notes, setNotes] = useState('');
 	const [openPicker, setOpenPicker] = useState<null | 'gender' | 'city' | 'blood'>(null);
-	const requestedTo = typeof params.requestedTo === 'string' ? params.requestedTo : undefined;
+	const [requestedTo, setRequestedTo] = useState<string | undefined>(
+		typeof params.requestedTo === 'string' ? params.requestedTo : undefined
+	);
+	const [targetedUserName, setTargetedUserName] = useState<string>('');
+	const [locationLat, setLocationLat] = useState<number | undefined>();
+	const [locationLng, setLocationLng] = useState<number | undefined>();
+	const [gettingLocation, setGettingLocation] = useState(false);
+
+	// Update requestedTo when params change
+	useEffect(() => {
+		const paramRequestedTo = typeof params.requestedTo === 'string' ? params.requestedTo : undefined;
+		if (paramRequestedTo !== requestedTo) {
+			setRequestedTo(paramRequestedTo);
+		}
+	}, [params.requestedTo]);
 
 	useEffect(() => {
 		(async () => {
@@ -31,8 +47,47 @@ export default function RequestBloodScreen() {
 				if (!city && profile.city) setCity(profile.city);
 				if (!gender && profile.gender) setGender(profile.gender);
 			}
+
+			// Get current location
+			setGettingLocation(true);
+			try {
+				const { status } = await Location.requestForegroundPermissionsAsync();
+				if (status === 'granted') {
+					const location = await Location.getCurrentPositionAsync({});
+					setLocationLat(location.coords.latitude);
+					setLocationLng(location.coords.longitude);
+				} else {
+					Alert.alert(
+						'Location Permission',
+						'Location permission is needed to find nearby donors. You can still create a request without it.'
+					);
+				}
+			} catch (error) {
+				console.error('Error getting location:', error);
+			} finally {
+				setGettingLocation(false);
+			}
 		})();
 	}, []);
+
+	// Load targeted user name when requestedTo changes
+	useEffect(() => {
+		(async () => {
+			if (requestedTo) {
+				try {
+					const targetedUser = await getUserProfile(requestedTo);
+					if (targetedUser) {
+						setTargetedUserName(targetedUser.name);
+					}
+				} catch (error) {
+					console.error('Error getting targeted user:', error);
+					setTargetedUserName('');
+				}
+			} else {
+				setTargetedUserName('');
+			}
+		})();
+	}, [requestedTo]);
 
 
 	const onSubmit = async () => {
@@ -47,9 +102,11 @@ export default function RequestBloodScreen() {
 				city,
 				gender,
 				hospital,
+				locationLat,
+				locationLng,
 				unitsRequired: units ? Number(units) : undefined,
 				notes,
-				requestedTo,
+				requestedTo: requestedTo || undefined,
 			});
 			Alert.alert('Posted', 'Your request has been posted.');
 			setPatientName('');
@@ -59,6 +116,8 @@ export default function RequestBloodScreen() {
 			setHospital('');
 			setUnits('');
 			setNotes('');
+			setRequestedTo(undefined);
+			setTargetedUserName('');
 		} catch (e: any) {
 			Alert.alert('Post failed', e?.message ?? 'Could not post request. Are you logged in?');
 		}
@@ -85,11 +144,51 @@ export default function RequestBloodScreen() {
 			<TextInput placeholder="Hospital/Location" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={hospital} onChangeText={setHospital} />
 			<TextInput placeholder="Quantity (units)" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} keyboardType="number-pad" style={[styles.input, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={units} onChangeText={setUnits} />
 			<TextInput placeholder="Additional Notes" placeholderTextColor={isDark ? '#9CA3AF' : '#6B7280'} style={[styles.input, styles.textarea, { color: isDark ? '#fff' : '#111827', borderColor: isDark ? '#374151' : '#e5e7eb', backgroundColor: isDark ? '#111827' : '#fff' }]} value={notes} onChangeText={setNotes} multiline />
-			{requestedTo ? (
-				<View style={{ marginTop: 4 }}>
-					<Text style={{ color: isDark ? '#D1D5DB' : '#6B7280' }}>Requesting a specific donor</Text>
+			
+			{gettingLocation && (
+				<View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+					<ActivityIndicator size="small" color={isDark ? '#fff' : '#111827'} />
+					<Text style={{ color: isDark ? '#D1D5DB' : '#6B7280', fontSize: 12 }}>
+						Getting your location...
+					</Text>
 				</View>
-			) : null}
+			)}
+
+			{requestedTo && targetedUserName ? (
+				<View style={[styles.targetedUserContainer, { backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderColor: '#E11D48', borderWidth: 2 }]}>
+					<View style={{ flex: 1 }}>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+							<Ionicons name="person-circle" size={16} color="#E11D48" />
+							<Text style={{ color: '#E11D48', fontSize: 12, fontWeight: '600' }}>
+								Targeted Request
+							</Text>
+						</View>
+						<Text style={{ color: isDark ? '#fff' : '#111827', fontWeight: '600', fontSize: 16 }}>
+							{targetedUserName}
+						</Text>
+						<Text style={{ color: isDark ? '#9CA3AF' : '#6B7280', fontSize: 11, marginTop: 4 }}>
+							Only this donor will be notified. Remove to make it a general request.
+						</Text>
+					</View>
+					<TouchableOpacity
+						onPress={() => {
+							setRequestedTo(undefined);
+							setTargetedUserName('');
+						}}
+						style={[styles.removeButton, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}
+					>
+						<Ionicons name="close-circle" size={20} color={isDark ? '#fff' : '#111827'} />
+					</TouchableOpacity>
+				</View>
+			) : (
+				<View style={[styles.generalRequestInfo, { backgroundColor: isDark ? '#1F2937' : '#F3F4F6', borderColor: isDark ? '#374151' : '#E5E7EB' }]}>
+					<Ionicons name="globe" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
+					<Text style={{ color: isDark ? '#9CA3AF' : '#6B7280', fontSize: 12, marginLeft: 6 }}>
+						General request - All matching donors will be notified
+					</Text>
+				</View>
+			)}
+
 			<TouchableOpacity style={styles.primaryButton} onPress={onSubmit}>
 				<Text style={styles.primaryText}>Post Request</Text>
 			</TouchableOpacity>
@@ -144,6 +243,29 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	primaryText: { color: '#fff', fontWeight: '600' },
+	targetedUserContainer: {
+		marginTop: 12,
+		padding: 12,
+		borderRadius: 10,
+		borderWidth: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+	},
+	removeButton: {
+		padding: 8,
+		borderRadius: 6,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	generalRequestInfo: {
+		marginTop: 12,
+		padding: 12,
+		borderRadius: 10,
+		borderWidth: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
 });
 
 

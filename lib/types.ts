@@ -10,8 +10,25 @@ export type UserProfile = {
   available?: boolean;
   mode?: 'donor' | 'patient';
   themePreference?: 'system' | 'light' | 'dark';
+  locationLat?: number;
+  locationLng?: number;
   createdAt: number;
   updatedAt: number;
+};
+
+export type MatchScore = {
+  matchScore: number;
+  distanceKm?: number;
+  distanceScore: number;
+  bloodTypeScore: number;
+  eligibilityScore: number;
+  reliabilityScore: number;
+  weights?: {
+    distance: number;
+    bloodType: number;
+    eligibility: number;
+    reliability: number;
+  };
 };
 
 export type BloodRequest = {
@@ -31,6 +48,7 @@ export type BloodRequest = {
   requestedTo?: string; // specific donor uid
   status: 'open' | 'pending' | 'accepted' | 'rejected' | 'fulfilled' | 'cancelled';
   createdAt: number;
+  matchScore?: MatchScore; // Match score for current user (if donor)
 };
 
 export type Donation = {

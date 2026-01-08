@@ -13,6 +13,12 @@ export async function saveUserProfile(partial: Partial<UserProfile>): Promise<Us
 
 export async function getUserProfile(uid?: string): Promise<UserProfile | null> {
   try {
+    if (uid) {
+      // Get specific user by ID
+      const profile = await UserAPI.getUserById(uid);
+      return profile;
+    }
+    // Get current user profile
     const profile = await UserAPI.getProfile();
     return profile;
   } catch (error: any) {

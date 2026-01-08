@@ -100,6 +100,7 @@ export type ListRequestsFilters = {
   mineOnly?: boolean; // requests I created
   toMeOnly?: boolean; // targeted to me
   openOnly?: boolean; // status === 'open'
+  includeMatchScores?: boolean; // include match scores for current user (if donor)
 };
 
 export async function listRequests(filters: ListRequestsFilters = {}): Promise<BloodRequest[]> {
